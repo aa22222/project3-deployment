@@ -1,0 +1,22 @@
+INSERT INTO menu_item (menu_item_id, item_name, current_price)
+VALUES
+    (1, 'Classic Milk Tea', 5.75),
+    (2, 'Jasmine Milk Tea', 5.75),
+    (3, 'Taro Milk Tea', 6.25),
+    (4, 'Matcha Milk Tea', 6.50),
+    (5, 'Thai Milk Tea', 6.25),
+    (6, 'Brown Sugar Milk Tea', 6.75),
+    (7, 'Oolong Milk Tea', 5.95),
+    (8, 'Wintermelon Milk Tea', 5.95),
+    (9, 'Mango Green Tea', 6.25),
+    (10, 'Passion Fruit Green Tea', 6.25),
+    (11, 'Peach Oolong Tea', 6.25),
+    (12, 'Strawberry Green Tea', 6.50),
+    (13, 'Honey Lemon Tea', 5.95),
+    (14, 'Lychee Black Tea', 6.25),
+    (15, 'Classic Black Tea', 4.50),
+    (16, 'Jasmine Green Tea', 4.50),
+    (17, 'Wintermelon Tea', 5.25),
+    (18, 'Mango Smoothie', 7.25),
+    (19, 'Taro Smoothie', 7.25),
+    (20, 'Strawberry Smoothie', 7.50);
