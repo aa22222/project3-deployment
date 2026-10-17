@@ -200,6 +200,14 @@ final class CashierPanel extends JPanel {
         renderCart();
     }
 
+    /**
+     * Parses a requested cart quantity and rejects values outside the available range.
+     *
+     * @param input text entered by the cashier
+     * @param maximum greatest allowed quantity for this cart line
+     * @return the parsed quantity when it is valid
+     * @throws IllegalArgumentException if the input is not a positive integer within the maximum
+     */
     static int parseCartQuantity(String input, int maximum) {
         final int quantity;
         try {

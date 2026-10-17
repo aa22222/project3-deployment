@@ -6,6 +6,13 @@ import java.sql.SQLException;
 final class DatabaseConnection {
     private DatabaseConnection() { }
 
+    /**
+     * Opens a PostgreSQL connection using the configured database environment variables.
+     *
+     * @return an open connection for GUI database operations
+     * @throws ClassNotFoundException if the PostgreSQL JDBC driver is unavailable
+     * @throws SQLException if the connection cannot be established
+     */
     static Connection connect() throws ClassNotFoundException, SQLException {
         Class.forName("org.postgresql.Driver");
         return DriverManager.getConnection(

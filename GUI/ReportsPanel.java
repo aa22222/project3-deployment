@@ -986,7 +986,7 @@ final class ReportsPanel extends JPanel {
         return "Period: " + range[0] + " through " + range[1].minusDays(1) + ", America/Chicago. ";
     }
 
-    /** Shared read-only JDBC loader for filtered reports. */
+    /** Runs a parameterized report query and returns each result row as a list of values. */
     private List<Object[]> queryReport(String sql, Object... parameters) throws Exception {
         List<Object[]> rows = new ArrayList<>();
         try (Connection read = DatabaseConnection.connect()) {

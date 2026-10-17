@@ -42,6 +42,7 @@ final class UiSupport {
         return bar;
     }
 
+    /** Returns the next identifier for a table by finding its current maximum ID. */
     static int nextId(Connection connection, String tableName, String idColumn) throws SQLException {
         // These identifiers are fixed constants selected by the application, not user input.
         String sql = "SELECT COALESCE(MAX(" + idColumn + "), 0) + 1 FROM " + tableName;

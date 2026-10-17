@@ -183,6 +183,7 @@ final class RecipeEditorDialog extends JDialog {
         return table.convertRowIndexToModel(selected);
     }
 
+    /** Saves the edited ingredient list for this menu item to the database. */
     private void saveRecipe() {
         boolean ownsTransaction = false;
         Savepoint savepoint = null;
