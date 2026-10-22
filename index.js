@@ -40,7 +40,6 @@ async function renderCashier(req, res) {
 
 app.get('/', renderCashier);
 app.get('/cashier', renderCashier);
-
 app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;
     const allowedCustomizations = new Set(['Boba', 'Less ice', 'More ice', 'Less sweet']);
@@ -126,17 +125,6 @@ app.post('/orders', async (req, res) => {
         if (client) client.release();
     }
 });
-
-app.get('/user', (req, res) => {
-    pool
-        .query('SELECT * FROM teammembers;')
-        .then(query_res => {
-            const data = {teammembers: query_res.rows};
-            res.render('user', data);        
-        })
-        .catch(error => res.status(500).send('Could not load team members: ' + error.message));
-});
-
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
