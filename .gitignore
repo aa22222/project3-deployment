@@ -1,7 +1,0 @@
-/build/
-.DS_Store
-
-# Local database credentials
-.env
-.env.*
-!.env.example
