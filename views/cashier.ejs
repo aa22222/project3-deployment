@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Boba Shop POS — Cashier</title>
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #26352d; background: #f4f7f2; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 28px; background: #fff; border-bottom: 1px solid #e3e9e1; }
+        h1 { margin: 0; font-size: clamp(1.25rem, 2.3vw, 1.8rem); }
+        .subtitle { margin: 5px 0 0; color: #718078; }
+        button { font: inherit; cursor: pointer; }
+        main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 22px; padding: 22px; max-width: 1440px; margin: auto; min-height: calc(100vh - 85px); }
+        .panel { background: white; border: 1px solid #e1e8e1; border-radius: 16px; box-shadow: 0 5px 18px #344b3910; }
+        .menu-panel { padding: 20px; }
+        h2 { margin: 0 0 16px; font-size: 1.15rem; }
+        #menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 12px; }
+        .drink { min-height: 102px; border: 1px solid #dbe5db; border-radius: 13px; background: #f9fbf8; color: #26352d; padding: 16px; text-align: left; transition: .15s ease; }
+        .drink:hover { border-color: #77a888; background: #f1f8f1; transform: translateY(-1px); }
+        .drink-name { display: block; font-size: 1rem; font-weight: 700; margin-bottom: 9px; }
+        .price { color: #52775e; font-weight: 700; }
+        aside { padding: 19px; display: flex; flex-direction: column; min-height: 520px; }
+        .cart-title { padding-bottom: 14px; border-bottom: 1px solid #edf0eb; }
+        #cart { flex: 1; overflow: auto; max-height: 48vh; }
+        .empty { color: #88938b; text-align: center; padding: 34px 12px; }
+        .cart-line { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 13px 0; border-bottom: 1px solid #edf0eb; }
+        .line-name { font-weight: 700; }
+        .line-meta, .line-custom { color: #758178; font-size: .88rem; margin-top: 4px; }
+        .remove { border: 0; color: #9b3f3c; background: transparent; font-size: 1.5rem; align-self: start; }
+        .line-actions { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
+        .qty-btn { border: 1px solid #dce5dc; background: #fff; border-radius: 7px; width: 27px; height: 27px; }
+        .customizations { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 14px; }
+        .customizations button { border: 1px solid #dce5dc; background: #f7faf6; color: #46584c; border-radius: 8px; padding: 9px 6px; font-size: .83rem; }
+        .customizations button:hover { background: #edf6ed; }
+        .checkout { border-top: 1px solid #edf0eb; padding-top: 15px; margin-top: 14px; }
+        .total { font-size: 1.35rem; font-weight: 800; display: flex; justify-content: space-between; margin-bottom: 14px; }
+        #submit { width: 100%; border: 0; background: #417552; color: #fff; border-radius: 10px; padding: 15px; font-weight: 750; font-size: 1rem; }
+        #submit:hover { background: #356344; }
+        #submit:disabled { opacity: .55; cursor: wait; }
+        #notice { min-height: 1.25em; margin: 10px 0 0; color: #9b3f3c; font-size: .9rem; }
+        @media (max-width: 850px) { main { grid-template-columns: 1fr; padding: 14px; } aside { min-height: 400px; } #cart { max-height: 36vh; } }
+        @media (max-width: 480px) { header { padding: 16px; } main { padding: 10px; } .menu-panel, aside { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div><h1>Boba Shop POS</h1><p class="subtitle">Tap a drink to add it to the order</p></div>
+    </header>
+    <main>
+        <section class="panel menu-panel" aria-labelledby="menu-heading">
+            <h2 id="menu-heading">Menu</h2>
+            <div id="menu">
+                <% menuItems.forEach(item => { %>
+                    <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>">
+                        <span class="drink-name"><%= item.item_name %></span>
+                        <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
+                    </button>
+                <% }); %>
+                <% if (menuItems.length === 0) { %><p>No menu drinks are available yet.</p><% } %>
+            </div>
+        </section>
+        <aside class="panel" aria-labelledby="order-heading">
+            <h2 id="order-heading" class="cart-title">Order <span style="color:#8a958d;font-weight:400">— tap × to remove</span></h2>
+            <div id="cart" aria-live="polite"></div>
+            <div class="customizations" aria-label="Order customizations">
+                <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
+                <button type="button" data-customization="Less ice">Less ice</button>
+                <button type="button" data-customization="More ice">More ice</button>
+                <button type="button" data-customization="Less sweet">Less sweet</button>
+            </div>
+            <div class="checkout">
+                <div class="total"><span>TOTAL</span><span id="total">$0.00</span></div>
+                <button id="submit" type="button">Submit order</button>
+                <p id="notice" role="status"></p>
+            </div>
+        </aside>
+    </main>
+    <script>
+        const cart = [];
+        const money = value => '$' + value.toFixed(2);
+        const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+        const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
+        const sameCustomizations = (a, b) => a.length === b.length && a.every(value => b.includes(value));
+
+        document.querySelectorAll('.drink').forEach(button => button.addEventListener('click', () => {
+            const id = Number(button.dataset.id);
+            const line = cart.find(item => item.menuItemId === id && item.customizations.length === 0);
+            if (line) line.quantity++;
+            else cart.push({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: []});
+            renderCart();
+        }));
+
+        function renderCart() {
+            const cartElement = document.getElementById('cart');
+            if (cart.length === 0) cartElement.innerHTML = '<p class="empty">Your order is empty.<br>Choose a drink to get started.</p>';
+            else cartElement.innerHTML = cart.map((line, index) => `
+                <div class="cart-line">
+                    <div>
+                        <div class="line-name">${escapeHtml(line.name)}</div>
+                        <div class="line-meta">${line.quantity} × ${money(linePrice(line))} &nbsp; ${money(linePrice(line) * line.quantity)}</div>
+                        ${line.customizations.length ? `<div class="line-custom">${escapeHtml(line.customizations.join(', '))}</div>` : ''}
+                        <div class="line-actions">
+                            <button class="qty-btn" type="button" data-action="decrease" data-index="${index}" aria-label="Remove one">−</button>
+                            <span>${line.quantity}</span>
+                            <button class="qty-btn" type="button" data-action="increase" data-index="${index}" aria-label="Add one">+</button>
+                        </div>
+                    </div>
+                    <button class="remove" type="button" data-action="remove" data-index="${index}" aria-label="Remove ${escapeHtml(line.name)}">×</button>
+                </div>`).join('');
+            const total = cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0);
+            document.getElementById('total').textContent = money(total);
+            document.getElementById('submit').disabled = cart.length === 0;
+        }
+
+        document.getElementById('cart').addEventListener('click', event => {
+            const button = event.target.closest('[data-action]');
+            if (!button) return;
+            const index = Number(button.dataset.index);
+            if (button.dataset.action === 'remove') cart.splice(index, 1);
+            if (button.dataset.action === 'increase') cart[index].quantity++;
+            if (button.dataset.action === 'decrease') {
+                cart[index].quantity--;
+                if (cart[index].quantity === 0) cart.splice(index, 1);
+            }
+            renderCart();
+        });
+
+        document.querySelectorAll('[data-customization]').forEach(button => button.addEventListener('click', () => {
+            const customization = button.dataset.customization;
+            if (cart.length === 0) return showNotice('Add a drink to the order first.');
+            const choices = cart.map((line, index) => `${index + 1}. ${line.name}${line.customizations.length ? ' — ' + line.customizations.join(', ') : ''} (${line.quantity})`);
+            const choice = window.prompt(`Which drink should get ${customization.toLowerCase()}? Enter 1–${cart.length}.\n\n${choices.join('\n')}`);
+            if (choice === null) return;
+            const index = Number(choice) - 1;
+            if (!Number.isInteger(index) || index < 0 || index >= cart.length) return showNotice('Choose a valid drink number.');
+            const line = cart[index];
+            if (line.customizations.includes(customization)) return showNotice(`${line.name} already has ${customization.toLowerCase()}.`);
+            let quantity = 1;
+            if (line.quantity > 1) {
+                const input = window.prompt(`How many ${line.name} drinks should get ${customization.toLowerCase()}? Enter 1–${line.quantity}.`, '1');
+                if (input === null) return;
+                quantity = Number(input);
+                if (!Number.isInteger(quantity) || quantity < 1 || quantity > line.quantity) return showNotice(`Enter a whole number from 1 to ${line.quantity}.`);
+            }
+            line.quantity -= quantity;
+            if (line.quantity === 0) cart.splice(index, 1);
+            const existing = cart.find(candidate => candidate.menuItemId === line.menuItemId && sameCustomizations(candidate.customizations, [...line.customizations, customization]));
+            if (existing) existing.quantity += quantity;
+            else cart.push({...line, quantity, customizations: [...line.customizations, customization]});
+            showNotice('');
+            renderCart();
+        }));
+
+        function showNotice(message) { document.getElementById('notice').textContent = message; }
+
+        document.getElementById('submit').addEventListener('click', async () => {
+            if (cart.length === 0) return showNotice('Tap a drink to add it to the order.');
+            const submitButton = document.getElementById('submit');
+            submitButton.disabled = true;
+            showNotice('Submitting order…');
+            try {
+                const response = await fetch('/orders', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))})
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Could not submit the order.');
+                cart.length = 0;
+                renderCart();
+                showNotice(`Order #${result.orderId} submitted. Total: $${result.total}`);
+            } catch (error) {
+                showNotice(error.message);
+            } finally {
+                submitButton.disabled = cart.length === 0;
+            }
+        });
+
+        renderCart();
+    </script>
+</body>
+</html>
