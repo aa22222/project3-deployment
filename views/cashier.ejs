@@ -6,7 +6,7 @@
     <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
 </head>
-<body>
+<body class="<%= pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
     <header>
         <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Select a drink to customize it and add it to the order' %></p></div>
         <a class="portal-back" href="/" aria-label="Back to portal hub">← Back to portal</a>
@@ -14,6 +14,12 @@
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
             <h2 id="menu-heading">Menu</h2>
+            <% if (pageTitle === 'Cashier') { %>
+            <label class="menu-search" for="menu-search">Find a menu item
+                <input id="menu-search" type="search" placeholder="Search by name…" autocomplete="off" aria-controls="menu">
+            </label>
+            <p id="menu-results" role="status"><%= menuItems.length %> items available</p>
+            <% } %>
             <div id="menu">
                 <% menuItems.forEach(item => { %>
                     <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>">
@@ -25,7 +31,7 @@
             </div>
         </section>
         <aside class="panel" aria-labelledby="order-heading">
-            <h2 id="order-heading" class="cart-title">Order <span class="cart-hint">— tap × to remove</span></h2>
+            <h2 id="order-heading" class="cart-title">Order <% if (pageTitle === 'Cashier') { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
             <div id="cart" aria-live="polite"></div>
             <% if (pageTitle === 'Customer Kiosk') { %>
             <div class="customizations" aria-label="Order customizations">
@@ -79,6 +85,13 @@
         const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
         const sameCustomizations = (a, b) => a.length === b.length && a.every(value => b.includes(value));
+        document.getElementById('menu-search')?.addEventListener('input', event => {
+            const search = event.target.value.trim().toLowerCase();
+            const buttons = [...document.querySelectorAll('.drink')];
+            buttons.forEach(button => button.hidden = !button.dataset.name.toLowerCase().includes(search));
+            const count = buttons.filter(button => !button.hidden).length;
+            document.getElementById('menu-results').textContent = count ? `${count} items available` : 'No matching items. Try another name.';
+        });
 
         const editor = document.getElementById('drink-editor');
         const form = document.getElementById('drink-form');
@@ -170,6 +183,11 @@
                 </div>`).join('');
             const total = cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0);
             document.getElementById('total').textContent = money(total);
+            const orderCount = document.getElementById('order-count');
+            if (orderCount) {
+                const count = cart.reduce((sum, line) => sum + line.quantity, 0);
+                orderCount.textContent = `${count} item${count === 1 ? '' : 's'}`;
+            }
             document.getElementById('submit').disabled = cart.length === 0;
         }
 

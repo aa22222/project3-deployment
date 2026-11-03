@@ -1,14 +1,14 @@
 :root {
-    --ink: #26352d;
-    --muted: #718078;
-    --soft-ink: #8a958d;
-    --green: #417552;
-    --green-dark: #356344;
-    --page: #f4f7f2;
-    --surface: #ffffff;
-    --border: #e1e8e1;
-    --line: #edf0eb;
-    --shadow: 0 12px 30px rgba(52, 75, 57, .08);
+    --ink: #2e2826;
+    --muted: #665c56;
+    --soft-ink: #665c56;
+    --green: #7c2939;
+    --green-dark: #61202d;
+    --page: #f3ede3;
+    --surface: #fffdf8;
+    --border: #d8cfc4;
+    --line: #e7dfd5;
+    --shadow: none;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--ink);
     background: var(--page);
@@ -21,34 +21,37 @@
 body {
     margin: 0;
     min-height: 100vh;
-    background:
-        radial-gradient(circle at 8% 0%, #e8f2e7 0, transparent 30rem),
-        var(--page);
+    background: var(--page);
 }
 
 header {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 22px max(28px, calc((100vw - 1100px) / 2));
-    background: rgba(255, 255, 255, .9);
-    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    background: var(--ink);
+    border-bottom: 0;
+    color: var(--surface);
+    flex-wrap: wrap;
 }
 
 .portal-back {
     margin-left: auto;
     padding: 9px 13px;
-    color: var(--green-dark);
+    color: var(--surface);
     font-size: .92rem;
     font-weight: 700;
     text-decoration: none;
-    background: #f4f8f3;
-    border: 1px solid var(--border);
-    border-radius: 9px;
+    background: transparent;
+    border: 1px solid #9b8b7e;
+    border-radius: 4px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .portal-back:hover {
-    background: #eaf3e8;
+    background: #51423c;
 }
 
 .manager-main {
@@ -70,13 +73,16 @@ header {
 
 h1 {
     margin: 0;
-    font-size: clamp(1.25rem, 2.3vw, 1.8rem);
-    letter-spacing: -.025em;
+    font-size: 1.8rem;
+    letter-spacing: 0;
+    font-family: Georgia, serif;
+    font-weight: 400;
 }
 
 .subtitle {
     margin: 5px 0 0;
-    color: var(--muted);
+    color: #e3d5c6;
+    font-size: .9rem;
 }
 
 button {
@@ -90,47 +96,56 @@ main {
     gap: 22px;
     max-width: 1440px;
     min-height: calc(100vh - 85px);
-    padding: 28px;
+    padding: 28px 32px;
     margin: auto;
+    align-items: start;
 }
 
 .panel {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 4px;
     box-shadow: var(--shadow);
 }
 
 .menu-panel {
-    padding: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
 }
 
 h2 {
     margin: 0 0 16px;
-    font-size: 1.15rem;
+    font-size: 1.6rem;
+    font-family: Georgia, serif;
+    font-weight: 400;
 }
 
 #menu {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 10px;
 }
 
 .drink {
-    min-height: 102px;
-    padding: 16px;
+    min-height: 124px;
+    padding: 18px 38px 18px 18px;
     color: var(--ink);
     text-align: left;
-    background: #f9fbf8;
-    border: 1px solid #dbe5db;
-    border-radius: 13px;
-    transition: .15s ease;
+    background: #fffdf8;
+    border: 1px solid #d8cfc4;
+    border-radius: 4px;
+    transition: background .15s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .drink:hover {
-    background: #f1f8f1;
-    border-color: #77a888;
-    transform: translateY(-1px);
+    background: #f5e5df;
+    border-color: #7c2939;
+    transform: none;
 }
 
 .drink-name {
@@ -138,23 +153,28 @@ h2 {
     margin-bottom: 9px;
     font-size: 1rem;
     font-weight: 700;
+    line-height: 1.4;
 }
 
 .price {
-    color: #52775e;
-    font-weight: 700;
+    color: #61202d;
+    font-weight: 600;
 }
 
 aside {
     display: flex;
     flex-direction: column;
-    min-height: 520px;
-    padding: 19px;
+    min-height: 480px;
+    padding: 22px;
+    border-top: 5px solid var(--green);
 }
 
 .cart-title {
     padding-bottom: 14px;
     border-bottom: 1px solid var(--line);
+    font-family: inherit;
+    font-size: 1.15rem;
+    font-weight: 700;
 }
 
 .cart-hint {
@@ -164,14 +184,16 @@ aside {
 
 #cart {
     flex: 1;
-    max-height: 48vh;
+    max-height: 45vh;
     overflow: auto;
+    min-height: 180px;
 }
 
 .empty {
-    padding: 34px 12px;
-    color: #88938b;
+    padding: 54px 8px;
+    color: #665c56;
     text-align: center;
+    line-height: 1.8;
 }
 
 .cart-line {
@@ -189,8 +211,9 @@ aside {
 .line-meta,
 .line-custom {
     margin-top: 4px;
-    color: #758178;
+    color: #665c56;
     font-size: .88rem;
+    line-height: 1.5;
 }
 
 .remove {
@@ -199,6 +222,8 @@ aside {
     font-size: 1.5rem;
     background: transparent;
     border: 0;
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .line-actions {
@@ -209,11 +234,11 @@ aside {
 }
 
 .qty-btn {
-    width: 27px;
-    height: 27px;
+    width: 44px;
+    height: 44px;
     background: #fff;
-    border: 1px solid #dce5dc;
-    border-radius: 7px;
+    border: 1px solid #d8cfc4;
+    border-radius: 4px;
 }
 
 .customizations {
@@ -225,29 +250,30 @@ aside {
 
 .customizations button {
     padding: 9px 6px;
-    color: #46584c;
+    color: #665c56;
     font-size: .83rem;
-    background: #f7faf6;
-    border: 1px solid #dce5dc;
-    border-radius: 8px;
+    background: #fffdf8;
+    border: 1px solid #d8cfc4;
+    border-radius: 4px;
+    min-height: 44px;
 }
 
 .customizations button:hover {
-    background: #edf6ed;
+    background: #f5e5df;
 }
 
-.edit-drink { padding: 6px 12px; color: var(--green-dark); background: #f4f8f3; border: 1px solid #bccdbf; border-radius: 7px; }
-#drink-editor { width: min(520px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 26px; overflow-y: auto; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.edit-drink { padding: 6px 12px; color: var(--green-dark); background: #f8eee8; border: 1px solid var(--border); border-radius: 4px; min-width: 44px; min-height: 44px; }
+#drink-editor { width: min(520px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 26px; overflow-y: auto; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--shadow); }
 #drink-editor::backdrop { background: rgb(20 35 26 / 55%); }
-#editor-hint { margin: 0 0 20px; color: #46584c; line-height: 1.5; }
-#drink-editor fieldset { margin: 18px 0; padding: 10px 14px; border: 1px solid #bccdbf; border-radius: 8px; }
+#editor-hint { margin: 0 0 20px; color: #665c56; line-height: 1.5; }
+#drink-editor fieldset { margin: 18px 0; padding: 10px 14px; border: 1px solid #d8cfc4; border-radius: 4px; }
 #drink-editor legend, .quantity-label { font-weight: 700; }
-#drink-quantity { display: block; width: 100px; margin-top: 8px; padding: 10px; font: inherit; border: 1px solid #718078; border-radius: 6px; }
+#drink-quantity { display: block; width: 100px; margin-top: 8px; padding: 10px; font: inherit; border: 1px solid #665c56; border-radius: 4px; }
 .drink-option { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
 .drink-option input { width: 20px; height: 20px; accent-color: var(--green-dark); }
 .editor-total { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; }
 .editor-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.editor-actions button { min-height: 44px; padding: 10px 18px; border: 1px solid #718078; border-radius: 8px; color: var(--ink); background: white; }
+.editor-actions button { min-height: 44px; padding: 10px 18px; border: 1px solid #665c56; border-radius: 4px; color: var(--ink); background: white; }
 .editor-actions #save-drink { color: white; background: var(--green-dark); border-color: var(--green-dark); }
 #editor-error { color: #92312e; }
 #drink-editor :focus-visible, .edit-drink:focus-visible { outline: 3px solid var(--green-dark); outline-offset: 3px; }
@@ -262,7 +288,7 @@ aside {
     display: flex;
     justify-content: space-between;
     margin-bottom: 14px;
-    font-size: 1.35rem;
+    font-size: 1.6rem;
     font-weight: 800;
 }
 
@@ -274,7 +300,8 @@ aside {
     font-weight: 750;
     background: var(--green);
     border: 0;
-    border-radius: 10px;
+    border-radius: 4px;
+    min-height: 50px;
 }
 
 #submit:hover {
@@ -282,15 +309,16 @@ aside {
 }
 
 #submit:disabled {
-    cursor: wait;
+    cursor: default;
     opacity: .55;
 }
 
 #notice {
     min-height: 1.25em;
     margin: 10px 0 0;
-    color: #9b3f3c;
+    color: var(--green-dark);
     font-size: .9rem;
+    line-height: 1.5;
 }
 
 .portal-main {
@@ -315,22 +343,24 @@ aside {
     color: var(--ink);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 4px;
     text-decoration: none;
     transition: border-color .15s ease, background-color .15s ease;
 }
 
 .portal-card:hover,
 .portal-card:focus-visible {
-    border-color: #77a888;
-    background: #f9fbf8;
-    outline: none;
+    border-color: #7c2939;
+    background: #fffdf8;
+    outline: 3px solid #b35426;
+    outline-offset: 3px;
 }
 
 .portal-card-title {
     margin-bottom: 6px;
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 400;
+    font-family: Georgia, serif;
 }
 
 .portal-card-description {
@@ -390,7 +420,7 @@ aside {
 .kitchen-content { display: block; max-width: 1200px; min-height: calc(100vh - 85px); padding: 28px; margin: auto; }
 .kitchen-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .kitchen-heading h2 { margin: 0; }
-.kitchen-message { padding: 36px 18px; color: var(--muted); text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.kitchen-message { padding: 36px 18px; color: var(--muted); text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
 .kitchen-message[hidden] { display: none; }
 .order-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); align-items: start; gap: 16px; }
 .kitchen-order-card { padding: 18px; }
@@ -405,7 +435,7 @@ aside {
 .kitchen-order-total { display: flex; justify-content: space-between; padding-top: 12px; color: var(--muted); font-size: .84rem; border-top: 1px solid var(--line); }
 .kitchen-order-total strong { color: var(--ink); }
 .kitchen-order-actions { margin-top: 14px; }
-.kitchen-action { min-height: 37px; width: 100%; padding: 8px 11px; font: inherit; font-size: .82rem; font-weight: 700; border-radius: 8px; }
+.kitchen-action { min-height: 44px; width: 100%; padding: 8px 11px; font: inherit; font-size: .82rem; font-weight: 700; border-radius: 4px; }
 .kitchen-action { flex: 1; color: #fff; background: var(--green); border: 1px solid var(--green); }
 .kitchen-action:hover { background: var(--green-dark); }
 .kitchen-action:disabled { opacity: .55; cursor: wait; }
@@ -414,4 +444,19 @@ aside {
     .kitchen-header { padding: 18px 16px; }
     .kitchen-content { padding: 18px 14px; }
     .order-grid { grid-template-columns: 1fr; }
+}
+
+/* Shared menu controls and cashier layout. */
+:is(button, a, input):focus-visible { outline: 3px solid #b35426; outline-offset: 3px; }
+.menu-search { display: block; max-width: 420px; font-size: .85rem; font-weight: 700; }
+.menu-search input { display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 10px 14px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid #9b8b7e; border-radius: 4px; }
+#menu-results { min-height: 1.4em; margin: 14px 0; color: var(--muted); font-size: .85rem; }
+.drink[hidden] { display: none; }
+.drink::after { content: '+'; position: absolute; right: 15px; bottom: 15px; color: var(--green); font-size: 1.4rem; }
+#order-count { font-size: .8rem; font-weight: 500; color: var(--muted); }
+.cashier-page .cart-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cashier-page aside { position: sticky; top: 20px; }
+.total span:first-child { align-self: center; font-size: .8rem; letter-spacing: .08em; }
+@media (max-width: 850px) {
+    .cashier-page aside { position: static; }
 }
