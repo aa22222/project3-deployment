@@ -56,6 +56,7 @@ async function renderOrderPage(req, res, view, pageTitle) {
 }
 
 app.get('/', (req, res) => res.render('portal'));
+app.get('/manager', (req, res) => res.render('manager'));
 app.get('/cashier', (req, res) => renderOrderPage(req, res, 'cashier', 'Cashier'));
 app.get('/kiosk', (req, res) => renderOrderPage(req, res, 'cashier', 'Customer Kiosk'));
 app.get('/kitchen', (req, res) => res.render('kitchen'));

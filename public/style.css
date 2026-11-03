@@ -51,6 +51,23 @@ header {
     background: #eaf3e8;
 }
 
+.manager-main {
+    display: block;
+    max-width: 960px;
+    min-height: calc(100vh - 85px);
+    padding: 28px;
+    margin: auto;
+}
+
+.manager-panel {
+    padding: 24px;
+}
+
+.manager-panel p {
+    margin: 0;
+    color: var(--muted);
+}
+
 h1 {
     margin: 0;
     font-size: clamp(1.25rem, 2.3vw, 1.8rem);
