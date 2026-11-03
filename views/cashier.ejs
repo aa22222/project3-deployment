@@ -9,7 +9,7 @@
 <body>
     <header>
         <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Tap a drink to add it to the order' %></p></div>
-        <% if (pageTitle === 'Customer Kiosk') { %><a class="portal-back" href="/" aria-label="Back to portal hub">← Back to portal</a><% } %>
+        <a class="portal-back" href="/" aria-label="Back to portal hub">← Back to portal</a>
     </header>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
