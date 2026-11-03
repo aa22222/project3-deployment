@@ -7,124 +7,55 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body class="kitchen-page">
-    <aside class="kitchen-sidebar" aria-label="Main navigation">
-        <a class="kitchen-brand" href="/" aria-label="Boba Shop POS home">
-            <span class="brand-mark" aria-hidden="true">B</span>
-            <span><strong>Boba Shop</strong><small>POINT OF SALE</small></span>
-        </a>
-        <div class="sidebar-label">WORKSPACE</div>
-        <nav class="kitchen-nav">
-            <a href="/" class="kitchen-nav-link"><span class="nav-icon" aria-hidden="true">⌂</span>Overview</a>
-            <a href="/cashier" class="kitchen-nav-link"><span class="nav-icon" aria-hidden="true">＋</span>Cashier</a>
-            <a href="/kitchen" class="kitchen-nav-link active" aria-current="page"><span class="nav-icon" aria-hidden="true">▤</span>Kitchen<span class="nav-live-dot" aria-label="Active"></span></a>
-            <a href="/manager" class="kitchen-nav-link"><span class="nav-icon" aria-hidden="true">▦</span>Manager</a>
-            <a href="/kiosk" class="kitchen-nav-link"><span class="nav-icon" aria-hidden="true">◉</span>Customer kiosk</a>
-        </nav>
-        <div class="sidebar-bottom">
-            <span class="online-dot" aria-hidden="true"></span>
-            <span><strong>Kitchen is open</strong><small>Orders update automatically</small></span>
+    <header class="kitchen-header">
+        <div>
+            <h1>Boba Shop POS</h1>
+            <p class="subtitle">Kitchen orders</p>
         </div>
-    </aside>
-
-    <main class="kitchen-main">
-        <header class="kitchen-topbar">
-            <div>
-                <div class="breadcrumb">Workspace <span>/</span> Kitchen</div>
-                <h1>Kitchen display</h1>
-                <p class="kitchen-subtitle">Keep every drink moving, one order at a time.</p>
-            </div>
-            <div class="topbar-status"><span class="online-dot" aria-hidden="true"></span>Live order queue</div>
-        </header>
-
-        <section class="kitchen-content" aria-label="Kitchen orders">
-            <div class="kitchen-overview">
-                <div><h2>Order queue</h2><p>Prioritize the orders that have been waiting longest.</p></div>
-                <div class="queue-summary" aria-label="Order counts">
-                    <div><strong id="active-count">0</strong><span>Active</span></div>
-                    <div><strong id="preparing-count">0</strong><span>Preparing</span></div>
-                    <div><strong id="ready-count">0</strong><span>Ready</span></div>
-                </div>
-            </div>
-
-            <div class="queue-toolbar">
-                <div class="queue-tabs" role="tablist" aria-label="Filter orders">
-                    <button class="queue-tab active" type="button" data-filter="active" role="tab" aria-selected="true">Active <span id="active-tab-count">0</span></button>
-                    <button class="queue-tab" type="button" data-filter="New" role="tab" aria-selected="false">New</button>
-                    <button class="queue-tab" type="button" data-filter="Preparing" role="tab" aria-selected="false">Preparing</button>
-                    <button class="queue-tab" type="button" data-filter="Ready" role="tab" aria-selected="false">Ready</button>
-                    <button class="queue-tab" type="button" data-filter="Cancelled" role="tab" aria-selected="false">Cancelled</button>
-                </div>
-                <div class="queue-tools">
-                    <label class="order-search"><span aria-hidden="true">⌕</span><input id="order-search" type="search" placeholder="Order # or drink" aria-label="Search orders by number or drink"></label>
-                    <label class="sort-control">Sort <select id="sort-order" aria-label="Sort orders by time"><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label>
-                    <button class="refresh-button" id="refresh-orders" type="button"><span aria-hidden="true">↻</span> Refresh</button>
-                </div>
-            </div>
-
-            <p class="queue-message" id="queue-message" role="status" aria-live="polite">Loading orders…</p>
-            <section class="order-grid" id="order-grid" aria-label="Order cards"></section>
-            <footer class="queue-footer"><span><span class="online-dot" aria-hidden="true"></span> Queue refreshes every 20 seconds</span><span id="last-updated">Waiting for orders…</span></footer>
-        </section>
+        <a class="hub-link" href="/">← Back to Hub</a>
+    </header>
+    <main class="kitchen-content">
+        <div class="kitchen-heading">
+            <h2>Orders</h2>
+            <button class="kitchen-refresh" id="refresh-orders" type="button">Refresh</button>
+        </div>
+        <p class="kitchen-message" id="queue-message" role="status" aria-live="polite">Loading orders…</p>
+        <section class="order-grid" id="order-grid" aria-label="Kitchen orders"></section>
     </main>
-
     <script>
         const orderGrid = document.getElementById('order-grid');
         const message = document.getElementById('queue-message');
         let orders = [];
-        let activeFilter = 'active';
-        let searchQuery = '';
 
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-        const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: 'numeric', minute: '2-digit'}).format(new Date(value));
-        const waitMinutes = value => Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
         const money = value => '$' + Number(value || 0).toFixed(2);
+        const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: 'numeric', minute: '2-digit'}).format(new Date(value));
 
         function renderOrders() {
-            const counts = {
-                active: orders.filter(order => order.status === 'New' || order.status === 'Preparing').length,
-                preparing: orders.filter(order => order.status === 'Preparing').length,
-                ready: orders.filter(order => order.status === 'Ready').length
-            };
-            document.getElementById('active-count').textContent = counts.active;
-            document.getElementById('active-tab-count').textContent = counts.active;
-            document.getElementById('preparing-count').textContent = counts.preparing;
-            document.getElementById('ready-count').textContent = counts.ready;
-
-            const sortDirection = document.getElementById('sort-order').value === 'newest' ? -1 : 1;
-            const visibleOrders = orders
-                .filter(order => activeFilter === 'active' ? order.status === 'New' || order.status === 'Preparing' : order.status === activeFilter)
-                .filter(order => !searchQuery || String(order.orderId).includes(searchQuery) || order.items.some(item => `${item.name} ${item.customizations}`.toLowerCase().includes(searchQuery)))
-                .sort((a, b) => (new Date(a.orderTime) - new Date(b.orderTime)) * sortDirection);
-
+            const visibleOrders = [...orders].sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime));
             if (!visibleOrders.length) {
                 orderGrid.innerHTML = '';
                 message.hidden = false;
-                message.textContent = searchQuery ? `No orders match “${searchQuery}”.` : activeFilter === 'active' ? 'All caught up — no active orders right now.' : `No ${activeFilter.toLowerCase()} orders right now.`;
+                message.textContent = 'No orders yet.';
                 return;
             }
             message.hidden = true;
             orderGrid.innerHTML = visibleOrders.map(order => {
-                const waited = waitMinutes(order.orderTime);
-                const urgency = order.status === 'New' || order.status === 'Preparing'
-                    ? waited >= 15 ? 'late' : waited >= 10 ? 'due-soon' : ''
-                    : '';
-                const statusClass = order.status.toLowerCase();
                 const items = order.items.map(item => `
-                    <li class="order-item">
+                    <li class="kitchen-order-item">
                         <span class="item-quantity">${Number(item.quantity)}×</span>
-                        <span class="item-detail"><strong>${escapeHtml(item.name)}</strong>${item.customizations ? `<small>${escapeHtml(item.customizations)}</small>` : ''}</span>
+                        <span><strong>${escapeHtml(item.name)}</strong>${item.customizations ? `<small>${escapeHtml(item.customizations)}</small>` : ''}</span>
                     </li>`).join('');
                 let actions = '';
-                if (order.status === 'New') actions = `<button class="order-action primary" data-status="Preparing" data-id="${order.orderId}" type="button">Start preparing</button><button class="order-action quiet" data-status="Cancelled" data-id="${order.orderId}" type="button">Cancel order</button>`;
-                if (order.status === 'Preparing') actions = `<button class="order-action primary" data-status="Ready" data-id="${order.orderId}" type="button">Mark ready</button><button class="order-action quiet" data-status="Cancelled" data-id="${order.orderId}" type="button">Cancel order</button>`;
-                if (order.status === 'Ready') actions = `<button class="order-action quiet" data-status="New" data-id="${order.orderId}" type="button">Reopen order</button>`;
-                if (order.status === 'Cancelled') actions = `<button class="order-action quiet" data-status="New" data-id="${order.orderId}" type="button">Restore order</button>`;
-                return `<article class="order-card ${urgency ? `urgency-${urgency}` : ''}">
-                    <header class="order-card-header"><div><span class="order-number">#${order.orderId}</span><span class="order-time">Placed ${timeLabel(order.orderTime)}</span></div><span class="status-badge ${statusClass}">${escapeHtml(order.status)}</span></header>
-                    <div class="order-wait ${urgency}"><span class="clock-icon" aria-hidden="true">◷</span>${waited < 1 ? 'Just placed' : `${waited} min waiting`}${urgency === 'late' ? ' · Needs attention' : urgency === 'due-soon' ? ' · Due soon' : ''}</div>
-                    <ul class="order-items">${items}</ul>
-                    <div class="order-card-total"><span>${order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} drinks</span><strong>${money(order.total)}</strong></div>
-                    <div class="order-card-actions">${actions}</div>
+                if (order.status === 'New') actions = `<button class="kitchen-action" data-status="Preparing" data-id="${order.orderId}" type="button">Start preparing</button><button class="kitchen-cancel" data-status="Cancelled" data-id="${order.orderId}" type="button">Cancel</button>`;
+                if (order.status === 'Preparing') actions = `<button class="kitchen-action" data-status="Ready" data-id="${order.orderId}" type="button">Mark ready</button><button class="kitchen-cancel" data-status="Cancelled" data-id="${order.orderId}" type="button">Cancel</button>`;
+                if (order.status === 'Ready') actions = `<button class="kitchen-action secondary" data-status="New" data-id="${order.orderId}" type="button">Reopen</button>`;
+                if (order.status === 'Cancelled') actions = `<button class="kitchen-action secondary" data-status="New" data-id="${order.orderId}" type="button">Restore</button>`;
+                return `<article class="panel kitchen-order-card">
+                    <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span></div><span class="kitchen-status ${order.status.toLowerCase()}">${escapeHtml(order.status)}</span></div>
+                    <ul class="kitchen-order-items">${items}</ul>
+                    <div class="kitchen-order-total"><span>${order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} drinks</span><strong>${money(order.total)}</strong></div>
+                    <div class="kitchen-order-actions">${actions}</div>
                 </article>`;
             }).join('');
         }
@@ -135,9 +66,7 @@
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not load orders.');
                 orders = result;
-                message.hidden = true;
                 renderOrders();
-                document.getElementById('last-updated').textContent = `Updated ${new Intl.DateTimeFormat(undefined, {hour: 'numeric', minute: '2-digit', second: '2-digit'}).format(new Date())}`;
             } catch (error) {
                 message.hidden = false;
                 message.textContent = error.message;
@@ -147,7 +76,6 @@
         orderGrid.addEventListener('click', async event => {
             const button = event.target.closest('[data-status]');
             if (!button) return;
-            const order = orders.find(item => item.orderId === Number(button.dataset.id));
             if (button.dataset.status === 'Cancelled' && !window.confirm(`Cancel order #${button.dataset.id}?`)) return;
             button.disabled = true;
             try {
@@ -157,6 +85,7 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not update the order.');
+                const order = orders.find(item => item.orderId === Number(button.dataset.id));
                 if (order) order.status = result.status;
                 renderOrders();
             } catch (error) {
@@ -166,21 +95,9 @@
             }
         });
 
-        document.querySelectorAll('.queue-tab').forEach(tab => tab.addEventListener('click', () => {
-            activeFilter = tab.dataset.filter;
-            document.querySelectorAll('.queue-tab').forEach(item => {
-                const selected = item === tab;
-                item.classList.toggle('active', selected);
-                item.setAttribute('aria-selected', String(selected));
-            });
-            renderOrders();
-        }));
-        document.getElementById('sort-order').addEventListener('change', renderOrders);
-        document.getElementById('order-search').addEventListener('input', event => { searchQuery = event.target.value.trim().toLowerCase(); renderOrders(); });
         document.getElementById('refresh-orders').addEventListener('click', loadOrders);
         loadOrders();
         window.setInterval(loadOrders, 20000);
-        window.setInterval(renderOrders, 60000);
     </script>
 </body>
 </html>
