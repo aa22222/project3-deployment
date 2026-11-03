@@ -515,3 +515,9 @@ aside {
     .order-grid { grid-template-columns: 1fr; }
     .queue-footer { flex-direction: column; }
 }
+
+.order-search { display: flex; min-width: 180px; align-items: center; gap: 7px; padding: 0 9px; color: #88938b; background: #fff; border: 1px solid #dfe6df; border-radius: 8px; }
+.order-search span { font-size: 1.05rem; }
+.order-search input { width: 100%; min-width: 0; padding: 8px 0; color: #3e5044; font: inherit; font-size: .78rem; background: transparent; border: 0; outline: 0; }
+.order-search:focus-within { border-color: #77a888; box-shadow: 0 0 0 3px rgba(65,117,82,.1); }
+@media (max-width: 560px) { .order-search { width: 100%; } }

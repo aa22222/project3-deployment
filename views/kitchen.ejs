@@ -55,6 +55,7 @@
                     <button class="queue-tab" type="button" data-filter="Cancelled" role="tab" aria-selected="false">Cancelled</button>
                 </div>
                 <div class="queue-tools">
+                    <label class="order-search"><span aria-hidden="true">⌕</span><input id="order-search" type="search" placeholder="Order # or drink" aria-label="Search orders by number or drink"></label>
                     <label class="sort-control">Sort <select id="sort-order" aria-label="Sort orders by time"><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label>
                     <button class="refresh-button" id="refresh-orders" type="button"><span aria-hidden="true">↻</span> Refresh</button>
                 </div>
@@ -71,6 +72,7 @@
         const message = document.getElementById('queue-message');
         let orders = [];
         let activeFilter = 'active';
+        let searchQuery = '';
 
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: 'numeric', minute: '2-digit'}).format(new Date(value));
@@ -91,12 +93,13 @@
             const sortDirection = document.getElementById('sort-order').value === 'newest' ? -1 : 1;
             const visibleOrders = orders
                 .filter(order => activeFilter === 'active' ? order.status === 'New' || order.status === 'Preparing' : order.status === activeFilter)
+                .filter(order => !searchQuery || String(order.orderId).includes(searchQuery) || order.items.some(item => `${item.name} ${item.customizations}`.toLowerCase().includes(searchQuery)))
                 .sort((a, b) => (new Date(a.orderTime) - new Date(b.orderTime)) * sortDirection);
 
             if (!visibleOrders.length) {
                 orderGrid.innerHTML = '';
                 message.hidden = false;
-                message.textContent = activeFilter === 'active' ? 'All caught up — no active orders right now.' : `No ${activeFilter.toLowerCase()} orders right now.`;
+                message.textContent = searchQuery ? `No orders match “${searchQuery}”.` : activeFilter === 'active' ? 'All caught up — no active orders right now.' : `No ${activeFilter.toLowerCase()} orders right now.`;
                 return;
             }
             message.hidden = true;
@@ -173,6 +176,7 @@
             renderOrders();
         }));
         document.getElementById('sort-order').addEventListener('change', renderOrders);
+        document.getElementById('order-search').addEventListener('input', event => { searchQuery = event.target.value.trim().toLowerCase(); renderOrders(); });
         document.getElementById('refresh-orders').addEventListener('click', loadOrders);
         loadOrders();
         window.setInterval(loadOrders, 20000);
