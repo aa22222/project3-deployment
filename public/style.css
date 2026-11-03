@@ -316,11 +316,11 @@ aside {
 
 @media print {
     @page { margin: 10mm; }
-    body.cashier-page * { visibility: hidden !important; }
-    body.cashier-page #receipt:not([hidden]), body.cashier-page #receipt:not([hidden]) * { visibility: visible !important; }
-    body.cashier-page #receipt:not([hidden]) { position: absolute; inset: 0 auto auto 0; display: block; width: 100%; padding: 0; overflow: visible; background: #fff; }
-    body.cashier-page .receipt-paper { width: 100%; max-width: none; padding: 0; box-shadow: none; }
-    body.cashier-page .receipt-actions { display: none; }
+    body.order-page * { visibility: hidden !important; }
+    body.order-page #receipt:not([hidden]), body.order-page #receipt:not([hidden]) * { visibility: visible !important; }
+    body.order-page #receipt:not([hidden]) { position: absolute; inset: 0 auto auto 0; display: block; width: 100%; padding: 0; overflow: visible; background: #fff; }
+    body.order-page .receipt-paper { width: 100%; max-width: none; padding: 0; box-shadow: none; }
+    body.order-page .receipt-actions { display: none; }
 }
 
 .total {

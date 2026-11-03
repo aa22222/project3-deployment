@@ -6,7 +6,7 @@
     <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
 </head>
-<body class="<%= pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
+<body class="order-page <%= pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
     <header>
         <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Select a drink to customize it and add it to the order' %></p></div>
     </header>
@@ -54,7 +54,6 @@
             </div>
         </aside>
     </main>
-    <% if (pageTitle === 'Cashier') { %>
     <section id="receipt" hidden aria-labelledby="receipt-title">
         <article class="receipt-paper">
             <h2 id="receipt-title">Boba Shop</h2>
@@ -73,6 +72,7 @@
             </div>
         </article>
     </section>
+    <% if (pageTitle === 'Cashier') { %>
     <dialog id="drink-editor" aria-labelledby="editor-title" aria-describedby="editor-hint">
         <form id="drink-form">
             <h2 id="editor-title">Customize drink</h2>
