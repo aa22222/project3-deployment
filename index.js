@@ -13,6 +13,9 @@ const mockMenu = [
     { menu_item_id: 4, item_name: 'Strawberry Smoothie', current_price: 5.99 }
 ];
 let nextMockOrderId = 1;
+const mockOrders = [];
+const kitchenStatuses = new Map();
+const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled']);
 
 // Create pool
 const pool = useMockDatabase ? null : new Pool({
@@ -77,7 +80,19 @@ app.post('/orders', async (req, res) => {
                 return { quantity, customizations, unitPrice };
             });
             const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-            return res.json({ orderId: nextMockOrderId++, total: total.toFixed(2) });
+            const orderId = nextMockOrderId++;
+            mockOrders.push({
+                orderId,
+                orderTime: new Date().toISOString(),
+                total: total.toFixed(2),
+                items: items.map((item, index) => ({
+                    name: mockMenu.find(menuItem => menuItem.menu_item_id === Number(submittedItems[index].menuItemId)).item_name,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice.toFixed(2),
+                    customizations: item.customizations.join(', ')
+                }))
+            });
+            return res.json({ orderId, total: total.toFixed(2) });
         }
 
         client = await pool.connect();
@@ -155,6 +170,60 @@ app.post('/orders', async (req, res) => {
     } finally {
         if (client) client.release();
     }
+});
+
+app.get('/api/kitchen/orders', async (req, res) => {
+    try {
+        if (useMockDatabase) {
+            const orders = mockOrders.map(order => ({
+                ...order,
+                status: kitchenStatuses.get(order.orderId) || 'New'
+            }));
+            return res.json(orders.sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime)));
+        }
+
+        const result = await pool.query(
+            'SELECT co.order_id, co.order_time, co.total_price, oi.menu_item_id, mi.item_name, ' +
+            'oi.quantity, oi.unit_price, oi.customizations ' +
+            'FROM customer_order co ' +
+            'JOIN order_item oi ON oi.order_id = co.order_id ' +
+            'JOIN menu_item mi ON mi.menu_item_id = oi.menu_item_id ' +
+            'ORDER BY co.order_time ASC, co.order_id ASC, oi.order_item_id ASC'
+        );
+        const ordersById = new Map();
+        for (const row of result.rows) {
+            const orderId = Number(row.order_id);
+            if (!ordersById.has(orderId)) {
+                ordersById.set(orderId, {
+                    orderId,
+                    orderTime: row.order_time,
+                    total: Number(row.total_price).toFixed(2),
+                    items: [],
+                    status: kitchenStatuses.get(orderId) || 'New'
+                });
+            }
+            ordersById.get(orderId).items.push({
+                name: row.item_name,
+                quantity: Number(row.quantity),
+                unitPrice: Number(row.unit_price).toFixed(2),
+                customizations: row.customizations || ''
+            });
+        }
+        return res.json([...ordersById.values()]);
+    } catch (error) {
+        console.error('Could not load kitchen orders:', error);
+        return res.status(500).json({ error: 'Could not load kitchen orders.' });
+    }
+});
+
+app.patch('/api/kitchen/orders/:orderId/status', (req, res) => {
+    const orderId = Number(req.params.orderId);
+    const { status } = req.body || {};
+    if (!Number.isSafeInteger(orderId) || orderId < 1 || !kitchenOrderStatuses.has(status)) {
+        return res.status(400).json({ error: 'Choose a valid order status.' });
+    }
+    kitchenStatuses.set(orderId, status);
+    return res.json({ orderId, status });
 });
 
 app.listen(port, () => {
