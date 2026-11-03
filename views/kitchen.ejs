@@ -15,12 +15,22 @@
             <h2>Orders</h2>
         </div>
         <p class="kitchen-message" id="queue-message" role="status" aria-live="polite">Loading orders…</p>
-        <section class="order-grid" id="order-grid" aria-label="Kitchen orders"></section>
+        <p>Drag tickets between columns, or use their status buttons.</p>
+        <section class="order-grid" id="order-grid" aria-label="Kitchen orders">
+            <% ['New', 'Preparing', 'Ready'].forEach(status => { %>
+            <section class="kitchen-column" data-column="<%= status %>" aria-label="<%= status %> orders">
+                <h3 tabindex="-1"><%= status %> <span class="column-count">0</span></h3>
+                <div class="column-orders"></div>
+            </section>
+            <% }); %>
+        </section>
     </main>
     <script>
         const orderGrid = document.getElementById('order-grid');
         const message = document.getElementById('queue-message');
         let orders = [];
+        const stages = ['New', 'Preparing', 'Ready'];
+        let saving = false, dragging = false, loaded = false, revision = 0;
 
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const money = value => '$' + Number(value || 0).toFixed(2);
@@ -30,64 +40,99 @@
             const visibleOrders = orders
                 .filter(order => order.status !== 'Done' && order.status !== 'Cancelled')
                 .sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime));
-            if (!visibleOrders.length) {
-                orderGrid.innerHTML = '';
-                message.hidden = false;
-                message.textContent = 'No orders yet.';
-                return;
-            }
-            message.hidden = true;
-            orderGrid.innerHTML = visibleOrders.map(order => {
-                const items = order.items.map(item => `
-                    <li class="kitchen-order-item">
-                        <span class="item-quantity">${Number(item.quantity)}×</span>
-                        <span><strong>${escapeHtml(item.name)}</strong>${item.customizations ? `<small>${escapeHtml(item.customizations)}</small>` : ''}</span>
-                    </li>`).join('');
-                const actions = `<button class="kitchen-action" data-status="Done" data-id="${order.orderId}" type="button">Mark as done</button>`;
-                return `<article class="panel kitchen-order-card">
-                    <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span></div></div>
-                    <ul class="kitchen-order-items">${items}</ul>
-                    <div class="kitchen-order-total"><span>${order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} drinks</span><strong>${money(order.total)}</strong></div>
-                    <div class="kitchen-order-actions">${actions}</div>
-                </article>`;
-            }).join('');
+            message.hidden = visibleOrders.length > 0;
+            message.textContent = 'No orders yet.';
+            orderGrid.querySelectorAll('[data-column]').forEach(column => {
+                const tickets = visibleOrders.filter(order => order.status === column.dataset.column);
+                column.querySelector('.column-count').textContent = tickets.length;
+                column.querySelector('.column-orders').innerHTML = tickets.map(order => {
+                    const items = order.items.map(item => `
+                        <li class="kitchen-order-item">
+                            <span class="item-quantity">${Number(item.quantity)}×</span>
+                            <span><strong>${escapeHtml(item.name)}</strong>${item.customizations ? `<small>${escapeHtml(item.customizations)}</small>` : ''}</span>
+                        </li>`).join('');
+                    const stage = stages.indexOf(order.status);
+                    const actions = [stage > 0 ? stages[stage - 1] : null, stages[stage + 1] || 'Done']
+                        .filter(Boolean).map(status => `<button class="kitchen-action" data-status="${status}" data-id="${order.orderId}" type="button" aria-label="Move order ${order.orderId} to ${status}">${status === 'Done' ? 'Mark done' : status}</button>`).join('');
+                    return `<article class="panel kitchen-order-card" draggable="true" data-id="${order.orderId}">
+                        <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span></div></div>
+                        <ul class="kitchen-order-items">${items}</ul>
+                        <div class="kitchen-order-total"><span>${order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} drinks</span><strong>${money(order.total)}</strong></div>
+                        <div class="kitchen-order-actions">${actions}</div>
+                    </article>`;
+                }).join('') || '<p class="column-empty">No orders</p>';
+            });
         }
 
         async function loadOrders() {
+            if (saving || dragging) return;
+            const currentRevision = revision;
             try {
                 const response = await fetch('/api/kitchen/orders');
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not load orders.');
-                orders = result;
-                renderOrders();
+                if (saving || dragging || currentRevision !== revision) return;
+                if (!loaded || JSON.stringify(orders) !== JSON.stringify(result)) {
+                    orders = result;
+                    renderOrders();
+                    loaded = true;
+                }
             } catch (error) {
                 message.hidden = false;
                 message.textContent = error.message;
             }
         }
 
-        orderGrid.addEventListener('click', async event => {
-            const button = event.target.closest('[data-status]');
-            if (!button) return;
-            button.disabled = true;
+        async function updateStatus(orderId, status) {
+            const order = orders.find(item => item.orderId === orderId);
+            if (saving || !order || order.status === status) return;
+            const restoreFocus = document.activeElement.matches('.kitchen-action');
+            saving = true;
+            revision++;
+            orderGrid.querySelectorAll('button').forEach(button => button.disabled = true);
             try {
-                const response = await fetch(`/api/kitchen/orders/${button.dataset.id}/status`, {
+                const response = await fetch(`/api/kitchen/orders/${orderId}/status`, {
                     method: 'PATCH', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({status: button.dataset.status})
+                    body: JSON.stringify({status})
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not update the order.');
-                const order = orders.find(item => item.orderId === Number(button.dataset.id));
-                if (order) order.status = result.status;
+                order.status = result.status;
                 if (['Done', 'Cancelled'].includes(result.status)) {
-                    orders = orders.filter(item => item.orderId !== Number(button.dataset.id));
+                    orders = orders.filter(item => item.orderId !== orderId);
                 }
                 renderOrders();
+                if (restoreFocus) (orderGrid.querySelector(`article[data-id="${orderId}"] button`) || orderGrid.querySelector('[data-column="Ready"] h3')).focus();
             } catch (error) {
-                button.disabled = false;
                 message.hidden = false;
                 message.textContent = error.message;
+            } finally {
+                saving = false;
+                orderGrid.querySelectorAll('button').forEach(button => button.disabled = false);
             }
+        }
+
+        orderGrid.addEventListener('click', event => {
+            const button = event.target.closest('[data-status]');
+            if (button) updateStatus(Number(button.dataset.id), button.dataset.status);
+        });
+        orderGrid.addEventListener('dragstart', event => {
+            const card = event.target.closest('article[data-id]');
+            if (!card || saving) return event.preventDefault();
+            dragging = true;
+            event.dataTransfer.setData('text/plain', card.dataset.id);
+            event.dataTransfer.effectAllowed = 'move';
+        });
+        orderGrid.addEventListener('dragend', () => dragging = false);
+        orderGrid.addEventListener('dragover', event => {
+            if (dragging && event.target.closest('[data-column]')) event.preventDefault();
+        });
+        orderGrid.addEventListener('drop', event => {
+            const column = event.target.closest('[data-column]');
+            if (!dragging || !column) return;
+            event.preventDefault();
+            dragging = false;
+            updateStatus(Number(event.dataTransfer.getData('text/plain')), column.dataset.column);
         });
 
         loadOrders();
