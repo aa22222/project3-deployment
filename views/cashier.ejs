@@ -41,6 +41,13 @@
             </div>
             <% } %>
             <div class="checkout">
+                <label class="payment-label" for="payment-method">Payment method</label>
+                <select id="payment-method" name="paymentMethod" required>
+                    <option value="" selected disabled>Choose a payment method</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Credit or debit card</option>
+                    <option value="Mobile pay">Mobile pay</option>
+                </select>
                 <div class="total"><span>TOTAL</span><span id="total">$0.00</span></div>
                 <button id="submit" type="button"><%= pageTitle === 'Customer Kiosk' ? 'Place order' : 'Submit order' %></button>
                 <p id="notice" role="status"></p>
@@ -237,19 +244,22 @@
 
         document.getElementById('submit').addEventListener('click', async () => {
             if (cart.length === 0) return showNotice('Tap a drink to add it to the order.');
+            const paymentMethod = document.getElementById('payment-method').value;
+            if (!paymentMethod) return showNotice('Choose a payment method to continue.');
             const submitButton = document.getElementById('submit');
             submitButton.disabled = true;
             showNotice('Submitting order…');
             try {
                 const response = await fetch('/orders', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))})
+                    body: JSON.stringify({paymentMethod, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))})
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not submit the order.');
                 cart.length = 0;
+                document.getElementById('payment-method').value = '';
                 renderCart();
-                showNotice(`Order #${result.orderId} submitted. Total: $${result.total}`);
+                showNotice(`Order #${result.orderId} submitted. Total: $${result.total}. Payment: ${result.paymentMethod}.`);
             } catch (error) {
                 showNotice(error.message);
             } finally {

@@ -51,6 +51,10 @@ Orders submitted in mock mode are shared between the cashier and kitchen while
 the app is running. Mock orders and kitchen status changes are cleared when the
 app stops. Database mode stores orders, items, and kitchen status in PostgreSQL.
 
+At checkout, choose Cash, Credit or debit card, or Mobile pay. The selected
+method is saved with the order. Card and mobile payments are recorded as the
+selected method only; processing them requires connecting a payment provider.
+
 ## `.env` File Format
 
 Create a file named `.env` in the project root. Replace the placeholder values

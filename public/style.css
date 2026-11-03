@@ -279,6 +279,25 @@ aside {
     border-top: 1px solid var(--line);
 }
 
+.payment-label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+#payment-method {
+    width: 100%;
+    min-height: 45px;
+    padding: 9px 11px;
+    margin-bottom: 16px;
+    color: var(--ink);
+    font: inherit;
+    background: #fff;
+    border: 1px solid #dce5dc;
+    border-radius: 8px;
+}
+
 .total {
     display: flex;
     justify-content: space-between;

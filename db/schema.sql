@@ -23,8 +23,18 @@ CREATE TABLE IF NOT EXISTS menu_item_ingredient (
 CREATE TABLE IF NOT EXISTS customer_order (
     order_id INTEGER PRIMARY KEY,
     order_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0)
+    total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0),
+    payment_method TEXT NOT NULL DEFAULT 'Cash'
 );
+
+-- Add the payment field to existing databases and keep its values constrained.
+ALTER TABLE customer_order
+    ADD COLUMN IF NOT EXISTS payment_method TEXT NOT NULL DEFAULT 'Cash';
+ALTER TABLE customer_order
+    DROP CONSTRAINT IF EXISTS customer_order_payment_method_check;
+ALTER TABLE customer_order
+    ADD CONSTRAINT customer_order_payment_method_check
+    CHECK (payment_method IN ('Cash', 'Card', 'Mobile pay'));
 
 CREATE TABLE IF NOT EXISTS order_item (
     order_item_id INTEGER PRIMARY KEY,

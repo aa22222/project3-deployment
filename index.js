@@ -99,7 +99,12 @@ app.get('/kiosk', (req, res) => renderOrderPage(req, res, 'cashier', 'Customer K
 app.get('/kitchen', (req, res) => res.render('kitchen'));
 app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;
+    const paymentMethod = req.body && req.body.paymentMethod;
+    const allowedPaymentMethods = new Set(['Cash', 'Card', 'Mobile pay']);
     const allowedCustomizations = new Set(['Boba', 'Less ice', 'More ice', 'Less sweet']);
+    if (!allowedPaymentMethods.has(paymentMethod)) {
+        return res.status(400).json({ error: 'Choose Cash, Credit or debit card, or Mobile pay.' });
+    }
     if (!Array.isArray(submittedItems) || submittedItems.length === 0) {
         return res.status(400).json({ error: 'Add a drink to the order first.' });
     }
@@ -127,6 +132,7 @@ app.post('/orders', async (req, res) => {
                 orderId,
                 orderTime: new Date().toISOString(),
                 total: total.toFixed(2),
+                paymentMethod,
                 items: items.map((item, index) => ({
                     name: mockMenu.find(menuItem => menuItem.menu_item_id === Number(submittedItems[index].menuItemId)).item_name,
                     quantity: item.quantity,
@@ -134,7 +140,7 @@ app.post('/orders', async (req, res) => {
                     customizations: item.customizations.join(', ')
                 }))
             });
-            return res.json({ orderId, total: total.toFixed(2) });
+            return res.json({ orderId, total: total.toFixed(2), paymentMethod });
         }
 
         client = await pool.connect();
@@ -169,8 +175,8 @@ app.post('/orders', async (req, res) => {
         let orderId = Number(idResult.rows[0].order_id);
         let orderItemId = Number(idResult.rows[0].order_item_id);
         await client.query(
-            'INSERT INTO customer_order(order_id, order_time, total_price) VALUES ($1, CURRENT_TIMESTAMP, $2)',
-            [orderId, total.toFixed(2)]
+            'INSERT INTO customer_order(order_id, order_time, total_price, payment_method) VALUES ($1, CURRENT_TIMESTAMP, $2, $3)',
+            [orderId, total.toFixed(2), paymentMethod]
         );
 
         for (const item of items) {
@@ -201,7 +207,7 @@ app.post('/orders', async (req, res) => {
         }
 
         await client.query('COMMIT');
-        return res.json({ orderId, total: total.toFixed(2) });
+        return res.json({ orderId, total: total.toFixed(2), paymentMethod });
     } catch (error) {
         if (client) await client.query('ROLLBACK').catch(() => {});
         const clientError = /invalid|no inventory recipe|not enough inventory/i.test(error.message || '');
