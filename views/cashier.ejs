@@ -8,7 +8,7 @@
 </head>
 <body>
     <header>
-        <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Tap a drink to add it to the order' %></p></div>
+        <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Select a drink to customize it and add it to the order' %></p></div>
         <a class="portal-back" href="/" aria-label="Back to portal hub">← Back to portal</a>
     </header>
     <main>
@@ -27,12 +27,14 @@
         <aside class="panel" aria-labelledby="order-heading">
             <h2 id="order-heading" class="cart-title">Order <span class="cart-hint">— tap × to remove</span></h2>
             <div id="cart" aria-live="polite"></div>
+            <% if (pageTitle === 'Customer Kiosk') { %>
             <div class="customizations" aria-label="Order customizations">
                 <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
                 <button type="button" data-customization="Less ice">Less ice</button>
                 <button type="button" data-customization="More ice">More ice</button>
                 <button type="button" data-customization="Less sweet">Less sweet</button>
             </div>
+            <% } %>
             <div class="checkout">
                 <div class="total"><span>TOTAL</span><span id="total">$0.00</span></div>
                 <button id="submit" type="button"><%= pageTitle === 'Customer Kiosk' ? 'Place order' : 'Submit order' %></button>
@@ -40,6 +42,37 @@
             </div>
         </aside>
     </main>
+    <% if (pageTitle === 'Cashier') { %>
+    <dialog id="drink-editor" aria-labelledby="editor-title" aria-describedby="editor-hint">
+        <form id="drink-form">
+            <h2 id="editor-title">Customize drink</h2>
+            <p id="editor-hint">Choose options for this order line. To order different options, add the drink again.</p>
+            <label class="quantity-label" for="drink-quantity">Quantity</label>
+            <input id="drink-quantity" name="quantity" type="number" min="1" max="1000" step="1" value="1" required autofocus>
+            <fieldset>
+                <legend>Toppings</legend>
+                <label class="drink-option"><input id="drink-boba" name="boba" type="checkbox"> Add boba (+$0.99 per drink)</label>
+            </fieldset>
+            <fieldset>
+                <legend>Ice level</legend>
+                <label class="drink-option"><input type="radio" name="ice" value="" checked> Regular ice</label>
+                <label class="drink-option"><input type="radio" name="ice" value="Less ice"> Less ice</label>
+                <label class="drink-option"><input type="radio" name="ice" value="More ice"> More ice</label>
+            </fieldset>
+            <fieldset>
+                <legend>Sweetness</legend>
+                <label class="drink-option"><input type="radio" name="sweetness" value="" checked> Regular sweetness</label>
+                <label class="drink-option"><input type="radio" name="sweetness" value="Less sweet"> Less sweet</label>
+            </fieldset>
+            <p class="editor-total">Item total <output id="item-total" data-testid="item-total" aria-live="polite">$0.00</output></p>
+            <p id="editor-error" role="alert"></p>
+            <div class="editor-actions">
+                <button id="save-drink" type="submit">Add to order</button>
+                <button id="cancel-drink" type="button">Cancel</button>
+            </div>
+        </form>
+    </dialog>
+    <% } %>
     <script>
         const cart = [];
         const money = value => '$' + value.toFixed(2);
@@ -47,8 +80,70 @@
         const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
         const sameCustomizations = (a, b) => a.length === b.length && a.every(value => b.includes(value));
 
+        const editor = document.getElementById('drink-editor');
+        const form = document.getElementById('drink-form');
+        let selectedDrink, editingIndex, editorTrigger;
+
+        function openEditor(drink, index, trigger) {
+            selectedDrink = drink;
+            editingIndex = index;
+            editorTrigger = trigger;
+            form.reset();
+            form.elements.quantity.value = drink.quantity;
+            form.elements.boba.checked = drink.customizations.includes('Boba');
+            form.elements.ice.value = drink.customizations.find(value => value.endsWith('ice')) || '';
+            form.elements.sweetness.value = drink.customizations.includes('Less sweet') ? 'Less sweet' : '';
+            document.getElementById('editor-title').textContent = `Customize ${drink.name}`;
+            document.getElementById('save-drink').textContent = index === null ? 'Add to order' : 'Save changes';
+            document.getElementById('editor-error').textContent = '';
+            updateItemTotal();
+            editor.showModal();
+        }
+
+        function editorChoices() {
+            return [form.elements.boba.checked ? 'Boba' : '', form.elements.ice.value, form.elements.sweetness.value].filter(Boolean);
+        }
+
+        function updateItemTotal() {
+            document.getElementById('item-total').textContent = form.elements.quantity.validity.valid
+                ? money(linePrice({...selectedDrink, customizations: editorChoices()}) * Number(form.elements.quantity.value))
+                : 'Enter a quantity from 1 to 1000';
+        }
+
+        if (editor) {
+            form.addEventListener('input', updateItemTotal);
+            document.getElementById('cancel-drink').onclick = () => editor.close();
+            editor.addEventListener('keydown', event => {
+                const first = form.elements.quantity, last = document.getElementById('cancel-drink');
+                if (event.key === 'Tab' && (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+                    event.preventDefault();
+                    (event.shiftKey ? last : first).focus();
+                }
+            });
+            editor.addEventListener('close', () => {
+                (editorTrigger.isConnected ? editorTrigger : document.querySelector(`[data-action="edit"][data-index="${editingIndex}"]`))?.focus();
+            });
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                const line = {...selectedDrink, quantity: Number(form.elements.quantity.value), customizations: editorChoices()};
+                const match = cart.find(item => item !== cart[editingIndex] && item.menuItemId === line.menuItemId && sameCustomizations(item.customizations, line.customizations));
+                if (match && match.quantity + line.quantity > 1000) {
+                    document.getElementById('editor-error').textContent = 'Matching drinks cannot exceed 1000 per order line.';
+                    return;
+                }
+                if (editingIndex !== null) cart.splice(editingIndex, 1);
+                if (match) match.quantity += line.quantity;
+                else cart.push(line);
+                if (editingIndex !== null) editingIndex = cart.indexOf(match || line);
+                renderCart();
+                showNotice('');
+                editor.close();
+            });
+        }
+
         document.querySelectorAll('.drink').forEach(button => button.addEventListener('click', () => {
             const id = Number(button.dataset.id);
+            if (editor) return openEditor({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: []}, null, button);
             const line = cart.find(item => item.menuItemId === id && item.customizations.length === 0);
             if (line) line.quantity++;
             else cart.push({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: []});
@@ -68,6 +163,7 @@
                             <button class="qty-btn" type="button" data-action="decrease" data-index="${index}" aria-label="Remove one">−</button>
                             <span>${line.quantity}</span>
                             <button class="qty-btn" type="button" data-action="increase" data-index="${index}" aria-label="Add one">+</button>
+                            ${editor ? `<button class="edit-drink" type="button" data-action="edit" data-index="${index}" aria-label="Edit ${escapeHtml(line.name)}">Edit</button>` : ''}
                         </div>
                     </div>
                     <button class="remove" type="button" data-action="remove" data-index="${index}" aria-label="Remove ${escapeHtml(line.name)}">×</button>
@@ -81,8 +177,12 @@
             const button = event.target.closest('[data-action]');
             if (!button) return;
             const index = Number(button.dataset.index);
+            if (button.dataset.action === 'edit') return openEditor(cart[index], index, button);
             if (button.dataset.action === 'remove') cart.splice(index, 1);
-            if (button.dataset.action === 'increase') cart[index].quantity++;
+            if (button.dataset.action === 'increase') {
+                if (cart[index].quantity >= 1000) return showNotice('A drink quantity cannot exceed 1000 per order line.');
+                cart[index].quantity++;
+            }
             if (button.dataset.action === 'decrease') {
                 cart[index].quantity--;
                 if (cart[index].quantity === 0) cart.splice(index, 1);
