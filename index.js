@@ -40,23 +40,24 @@ app.set("view engine", "ejs");
 app.use(express.static('public'));
 app.use(express.json());
 
-async function renderCashier(req, res) {
+async function renderOrderPage(req, res, view, pageTitle) {
     try {
         if (useMockDatabase) {
-            return res.render('cashier', { menuItems: mockMenu });
+            return res.render(view, { menuItems: mockMenu, pageTitle });
         }
         const result = await pool.query(
             'SELECT menu_item_id, item_name, current_price FROM menu_item ORDER BY item_name'
         );
-        res.render('cashier', { menuItems: result.rows });
+        res.render(view, { menuItems: result.rows, pageTitle });
     } catch (error) {
-        console.error('Could not load cashier menu:', error);
+        console.error(`Could not load ${pageTitle.toLowerCase()} menu:`, error);
         res.status(500).send('Could not load the menu. Check the database connection.');
     }
 }
 
 app.get('/', (req, res) => res.render('portal'));
-app.get('/cashier', renderCashier);
+app.get('/cashier', (req, res) => renderOrderPage(req, res, 'cashier', 'Cashier'));
+app.get('/kiosk', (req, res) => renderOrderPage(req, res, 'cashier', 'Customer Kiosk'));
 app.get('/kitchen', (req, res) => res.render('kitchen'));
 app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;

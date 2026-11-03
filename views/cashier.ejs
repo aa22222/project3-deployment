@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boba Shop POS — Cashier</title>
+    <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <header>
-        <div><h1>Boba Shop POS</h1><p class="subtitle">Tap a drink to add it to the order</p></div>
+        <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Tap a drink to add it to the order' %></p></div>
     </header>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
@@ -34,7 +34,7 @@
             </div>
             <div class="checkout">
                 <div class="total"><span>TOTAL</span><span id="total">$0.00</span></div>
-                <button id="submit" type="button">Submit order</button>
+                <button id="submit" type="button"><%= pageTitle === 'Customer Kiosk' ? 'Place order' : 'Submit order' %></button>
                 <p id="notice" role="status"></p>
             </div>
         </aside>
