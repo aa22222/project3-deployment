@@ -5,9 +5,17 @@ const dotenv = require('dotenv').config();
 // Create express app
 const app = express();
 const port = 3000;
+const useMockDatabase = process.argv.includes('--mock') || process.env.USE_MOCK_DB === 'true';
+const mockMenu = [
+    { menu_item_id: 1, item_name: 'Classic Milk Tea', current_price: 4.99 },
+    { menu_item_id: 2, item_name: 'Taro Milk Tea', current_price: 5.49 },
+    { menu_item_id: 3, item_name: 'Mango Green Tea', current_price: 4.79 },
+    { menu_item_id: 4, item_name: 'Strawberry Smoothie', current_price: 5.99 }
+];
+let nextMockOrderId = 1;
 
 // Create pool
-const pool = new Pool({
+const pool = useMockDatabase ? null : new Pool({
     user: process.env.PSQL_USER,
     host: process.env.PSQL_HOST,
     database: process.env.PSQL_DATABASE,
@@ -18,16 +26,20 @@ const pool = new Pool({
 
 // Add process hook to shutdown pool
 process.on('SIGINT', function() {
-    pool.end();
+    if (pool) pool.end();
     console.log('Application successfully shutdown');
     process.exit(0);
 });
 
 app.set("view engine", "ejs");
+app.use(express.static('public'));
 app.use(express.json());
 
 async function renderCashier(req, res) {
     try {
+        if (useMockDatabase) {
+            return res.render('cashier', { menuItems: mockMenu });
+        }
         const result = await pool.query(
             'SELECT menu_item_id, item_name, current_price FROM menu_item ORDER BY item_name'
         );
@@ -49,6 +61,25 @@ app.post('/orders', async (req, res) => {
 
     let client;
     try {
+        if (useMockDatabase) {
+            const menuById = new Map(mockMenu.map(item => [item.menu_item_id, item]));
+            const items = submittedItems.map(item => {
+                const menuItemId = Number(item.menuItemId);
+                const quantity = Number(item.quantity);
+                const customizations = Array.isArray(item.customizations) ? item.customizations : [];
+                const menuItem = menuById.get(menuItemId);
+                if (!menuItem || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 1000 ||
+                    customizations.some(value => !allowedCustomizations.has(value)) ||
+                    new Set(customizations).size !== customizations.length) {
+                    throw new Error('One or more order items are invalid. Refresh the page and try again.');
+                }
+                const unitPrice = Number(menuItem.current_price) + (customizations.includes('Boba') ? 0.99 : 0);
+                return { quantity, customizations, unitPrice };
+            });
+            const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+            return res.json({ orderId: nextMockOrderId++, total: total.toFixed(2) });
+        }
+
         client = await pool.connect();
         await client.query('BEGIN');
         await client.query('LOCK TABLE customer_order, order_item IN SHARE ROW EXCLUSIVE MODE');
@@ -127,5 +158,5 @@ app.post('/orders', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+    console.log(`Example app listening at http://localhost:${port}${useMockDatabase ? ' (mock database mode)' : ''}`);
 });
