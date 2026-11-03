@@ -12,13 +12,60 @@
             <h1>Boba Shop POS</h1>
             <p class="subtitle">Manager</p>
         </div>
-        <a class="portal-back" href="/" aria-label="Back to portal hub">← Back to portal</a>
     </header>
     <main class="manager-main">
         <section class="panel manager-panel">
-            <h2>Manager</h2>
-            <p>Manager tools will appear here.</p>
+            <h2>Inventory</h2>
+            <p>Enter the total stock on hand, then save that row. Refresh to see stock changes from orders.</p>
+            <% if (useMockDatabase) { %><p>Demo inventory — changes reset when the server restarts.</p><% } %>
+            <form action="/manager" class="inventory-toolbar">
+                <label class="menu-search" for="inventory-search">Find an ingredient
+                    <input id="inventory-search" type="search" placeholder="Search inventory…" autocomplete="off" aria-controls="inventory-list">
+                </label>
+                <button type="submit">Refresh inventory</button>
+            </form>
+            <p id="inventory-message" role="status"><%= error || (inventory.length ? '' : 'No inventory items found.') %></p>
+            <div id="inventory-list">
+                <% inventory.forEach(item => { %>
+                <form class="inventory-row" data-id="<%= item.inventory_item_id %>">
+                    <label for="stock-<%= item.inventory_item_id %>"><%= item.item_name %></label>
+                    <input id="stock-<%= item.inventory_item_id %>" aria-label="<%= item.item_name %> stock quantity" type="number" min="0" max="9999999999.99" step="0.01" value="<%= item.quantity_in_stock %>" required>
+                    <button type="submit">Save</button>
+                    <span role="status" class="inventory-feedback"></span>
+                </form>
+                <% }); %>
+            </div>
         </section>
     </main>
+    <script>
+        const rows = [...document.querySelectorAll('.inventory-row')];
+        document.getElementById('inventory-search').addEventListener('input', event => {
+            const search = event.target.value.trim().toLowerCase();
+            rows.forEach(row => row.hidden = !row.querySelector('label').textContent.toLowerCase().includes(search));
+            if (rows.length) document.getElementById('inventory-message').textContent = rows.some(row => !row.hidden) ? '' : 'No matching inventory items.';
+        });
+        rows.forEach(row => row.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = row.querySelector('button'), input = row.querySelector('input'), feedback = row.querySelector('.inventory-feedback');
+            button.disabled = true;
+            input.disabled = true;
+            feedback.textContent = 'Saving…';
+            try {
+                const response = await fetch(`/api/inventory/${row.dataset.id}`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity: Number(input.value) })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Could not save inventory.');
+                input.value = result.quantity_in_stock;
+                feedback.textContent = 'Saved';
+            } catch (error) {
+                feedback.textContent = error.message;
+            } finally {
+                button.disabled = false;
+                input.disabled = false;
+            }
+        }));
+    </script>
 </body>
 </html>

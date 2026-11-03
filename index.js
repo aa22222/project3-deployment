@@ -16,6 +16,7 @@ const mockMenu = [
 ];
 let nextMockOrderId = 1;
 const mockOrders = [];
+const mockInventory = [{ inventory_item_id: 1, item_name: 'Drink servings', quantity_in_stock: 100000 }];
 const kitchenStatuses = new Map();
 const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled', 'Done']);
 
@@ -56,7 +57,43 @@ async function renderOrderPage(req, res, view, pageTitle) {
 }
 
 app.get('/', (req, res) => res.render('portal'));
-app.get('/manager', (req, res) => res.render('manager'));
+app.get('/manager', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const inventory = useMockDatabase ? mockInventory : (await pool.query(
+            'SELECT inventory_item_id, item_name, quantity_in_stock FROM inventory_item ORDER BY item_name'
+        )).rows;
+        res.render('manager', { inventory, error: '', useMockDatabase });
+    } catch (error) {
+        console.error('Could not load inventory:', error);
+        res.status(500).render('manager', { inventory: [], error: 'Could not load inventory. Please refresh to try again.', useMockDatabase });
+    }
+});
+app.patch('/api/inventory/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    const quantity = req.body?.quantity;
+    if (!Number.isSafeInteger(id) || id < 1 || typeof quantity !== 'number' ||
+        !Number.isFinite(quantity) || quantity < 0 || quantity > 9999999999.99 || !/^\d+(\.\d{1,2})?$/.test(String(quantity))) {
+        return res.status(400).json({ error: 'Enter a valid quantity from 0 to 9999999999.99 with at most two decimal places.' });
+    }
+    try {
+        let item;
+        if (useMockDatabase) {
+            item = mockInventory.find(item => item.inventory_item_id === id);
+            if (item) item.quantity_in_stock = quantity;
+        } else {
+            item = (await pool.query(
+                'UPDATE inventory_item SET quantity_in_stock = $1 WHERE inventory_item_id = $2 RETURNING inventory_item_id, quantity_in_stock',
+                [quantity, id]
+            )).rows[0];
+        }
+        if (!item) return res.status(404).json({ error: 'Inventory item not found. Refresh the page.' });
+        res.json(item);
+    } catch (error) {
+        console.error('Could not update inventory:', error);
+        res.status(500).json({ error: 'Could not save inventory. Please try again.' });
+    }
+});
 app.get('/cashier', (req, res) => renderOrderPage(req, res, 'cashier', 'Cashier'));
 app.get('/kiosk', (req, res) => renderOrderPage(req, res, 'cashier', 'Customer Kiosk'));
 app.get('/kitchen', (req, res) => res.render('kitchen'));
