@@ -22,8 +22,10 @@ npm install
 
 ### 2. Run with the PostgreSQL database
 
-Create a `.env` file in the project root using the format below, and make sure
-the PostgreSQL database is running and contains the required tables.
+Create a `.env` file in the project root using the format below and make sure
+the PostgreSQL database is running. On startup, the app creates any missing
+POS tables from `db/schema.sql` and adds a small sample menu only when the menu
+is empty. Existing menu and inventory rows are preserved.
 
 Then start the application:
 
@@ -45,7 +47,9 @@ npm run start:mock
 
 Open the application at [http://localhost:3000](http://localhost:3000).
 
-Orders submitted in mock mode are not saved after the application stops.
+Orders submitted in mock mode are shared between the cashier and kitchen while
+the app is running. Mock orders and kitchen status changes are cleared when the
+app stops. Database mode stores orders, items, and kitchen status in PostgreSQL.
 
 ## `.env` File Format
 

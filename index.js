@@ -1,10 +1,12 @@
 const express = require('express');
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 const dotenv = require('dotenv').config();
 
 // Create express app
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 const useMockDatabase = process.argv.includes('--mock') || process.env.USE_MOCK_DB === 'true';
 const mockMenu = [
     { menu_item_id: 1, item_name: 'Classic Milk Tea', current_price: 4.99 },
@@ -15,7 +17,7 @@ const mockMenu = [
 let nextMockOrderId = 1;
 const mockOrders = [];
 const kitchenStatuses = new Map();
-const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled']);
+const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled', 'Done']);
 
 // Create pool
 const pool = useMockDatabase ? null : new Pool({
@@ -176,20 +178,30 @@ app.post('/orders', async (req, res) => {
 app.get('/api/kitchen/orders', async (req, res) => {
     try {
         if (useMockDatabase) {
-            const orders = mockOrders.map(order => ({
+            const orders = mockOrders
+                .filter(order => !['Cancelled', 'Done'].includes(kitchenStatuses.get(order.orderId)))
+                .map(order => ({
                 ...order,
                 status: kitchenStatuses.get(order.orderId) || 'New'
-            }));
+                }));
             return res.json(orders.sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime)));
         }
 
         const result = await pool.query(
-            'SELECT co.order_id, co.order_time, co.total_price, oi.menu_item_id, mi.item_name, ' +
-            'oi.quantity, oi.unit_price, oi.customizations ' +
+            'WITH kitchen_queue AS (' +
+            'SELECT co.order_id, co.order_time, co.total_price, COALESCE(kos.status, \'New\') AS status ' +
             'FROM customer_order co ' +
-            'JOIN order_item oi ON oi.order_id = co.order_id ' +
+            'LEFT JOIN kitchen_order_status kos ON kos.order_id = co.order_id ' +
+            'WHERE co.order_time >= CURRENT_TIMESTAMP - INTERVAL \'24 hours\' ' +
+            'AND COALESCE(kos.status, \'New\') NOT IN (\'Cancelled\', \'Done\') ' +
+            'ORDER BY co.order_time ASC, co.order_id ASC LIMIT 100' +
+            ') ' +
+            'SELECT q.order_id, q.order_time, q.total_price, oi.menu_item_id, mi.item_name, ' +
+            'oi.quantity, oi.unit_price, oi.customizations, q.status ' +
+            'FROM kitchen_queue q ' +
+            'JOIN order_item oi ON oi.order_id = q.order_id ' +
             'JOIN menu_item mi ON mi.menu_item_id = oi.menu_item_id ' +
-            'ORDER BY co.order_time ASC, co.order_id ASC, oi.order_item_id ASC'
+            'ORDER BY q.order_time ASC, q.order_id ASC, oi.order_item_id ASC'
         );
         const ordersById = new Map();
         for (const row of result.rows) {
@@ -200,7 +212,7 @@ app.get('/api/kitchen/orders', async (req, res) => {
                     orderTime: row.order_time,
                     total: Number(row.total_price).toFixed(2),
                     items: [],
-                    status: kitchenStatuses.get(orderId) || 'New'
+                    status: row.status || 'New'
                 });
             }
             ordersById.get(orderId).items.push({
@@ -217,16 +229,42 @@ app.get('/api/kitchen/orders', async (req, res) => {
     }
 });
 
-app.patch('/api/kitchen/orders/:orderId/status', (req, res) => {
+app.patch('/api/kitchen/orders/:orderId/status', async (req, res) => {
     const orderId = Number(req.params.orderId);
     const { status } = req.body || {};
     if (!Number.isSafeInteger(orderId) || orderId < 1 || !kitchenOrderStatuses.has(status)) {
         return res.status(400).json({ error: 'Choose a valid order status.' });
     }
-    kitchenStatuses.set(orderId, status);
-    return res.json({ orderId, status });
+    try {
+        if (useMockDatabase) {
+            kitchenStatuses.set(orderId, status);
+            return res.json({ orderId, status });
+        }
+        const existingOrder = await pool.query('SELECT 1 FROM customer_order WHERE order_id = $1', [orderId]);
+        if (existingOrder.rowCount === 0) return res.status(404).json({ error: 'Order not found.' });
+        await pool.query(
+            'INSERT INTO kitchen_order_status(order_id, status, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ' +
+            'ON CONFLICT (order_id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP',
+            [orderId, status]
+        );
+        return res.json({ orderId, status });
+    } catch (error) {
+        console.error('Could not update kitchen order:', error);
+        return res.status(500).json({ error: 'Could not update the order.' });
+    }
 });
 
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}${useMockDatabase ? ' (mock database mode)' : ''}`);
+async function startServer() {
+    if (!useMockDatabase) {
+        const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
+        await pool.query(schema);
+    }
+    app.listen(port, () => {
+        console.log(`Example app listening at http://localhost:${port}${useMockDatabase ? ' (mock database mode)' : ''}`);
+    });
+}
+
+startServer().catch(error => {
+    console.error('Could not initialize the database:', error);
+    process.exit(1);
 });

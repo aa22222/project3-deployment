@@ -8,16 +8,11 @@
 </head>
 <body class="kitchen-page">
     <header class="kitchen-header">
-        <div>
-            <h1>Boba Shop POS</h1>
-            <p class="subtitle">Kitchen orders</p>
-        </div>
-        <a class="hub-link" href="/">← Back to Hub</a>
+        <h1>Boba Shop POS</h1>
     </header>
     <main class="kitchen-content">
         <div class="kitchen-heading">
             <h2>Orders</h2>
-            <button class="kitchen-refresh" id="refresh-orders" type="button">Refresh</button>
         </div>
         <p class="kitchen-message" id="queue-message" role="status" aria-live="polite">Loading orders…</p>
         <section class="order-grid" id="order-grid" aria-label="Kitchen orders"></section>
@@ -32,7 +27,9 @@
         const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: 'numeric', minute: '2-digit'}).format(new Date(value));
 
         function renderOrders() {
-            const visibleOrders = [...orders].sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime));
+            const visibleOrders = orders
+                .filter(order => order.status !== 'Done' && order.status !== 'Cancelled')
+                .sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime));
             if (!visibleOrders.length) {
                 orderGrid.innerHTML = '';
                 message.hidden = false;
@@ -46,13 +43,9 @@
                         <span class="item-quantity">${Number(item.quantity)}×</span>
                         <span><strong>${escapeHtml(item.name)}</strong>${item.customizations ? `<small>${escapeHtml(item.customizations)}</small>` : ''}</span>
                     </li>`).join('');
-                let actions = '';
-                if (order.status === 'New') actions = `<button class="kitchen-action" data-status="Preparing" data-id="${order.orderId}" type="button">Start preparing</button><button class="kitchen-cancel" data-status="Cancelled" data-id="${order.orderId}" type="button">Cancel</button>`;
-                if (order.status === 'Preparing') actions = `<button class="kitchen-action" data-status="Ready" data-id="${order.orderId}" type="button">Mark ready</button><button class="kitchen-cancel" data-status="Cancelled" data-id="${order.orderId}" type="button">Cancel</button>`;
-                if (order.status === 'Ready') actions = `<button class="kitchen-action secondary" data-status="New" data-id="${order.orderId}" type="button">Reopen</button>`;
-                if (order.status === 'Cancelled') actions = `<button class="kitchen-action secondary" data-status="New" data-id="${order.orderId}" type="button">Restore</button>`;
+                const actions = `<button class="kitchen-action" data-status="Done" data-id="${order.orderId}" type="button">Mark as done</button>`;
                 return `<article class="panel kitchen-order-card">
-                    <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span></div><span class="kitchen-status ${order.status.toLowerCase()}">${escapeHtml(order.status)}</span></div>
+                    <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span></div></div>
                     <ul class="kitchen-order-items">${items}</ul>
                     <div class="kitchen-order-total"><span>${order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} drinks</span><strong>${money(order.total)}</strong></div>
                     <div class="kitchen-order-actions">${actions}</div>
@@ -76,7 +69,6 @@
         orderGrid.addEventListener('click', async event => {
             const button = event.target.closest('[data-status]');
             if (!button) return;
-            if (button.dataset.status === 'Cancelled' && !window.confirm(`Cancel order #${button.dataset.id}?`)) return;
             button.disabled = true;
             try {
                 const response = await fetch(`/api/kitchen/orders/${button.dataset.id}/status`, {
@@ -87,6 +79,9 @@
                 if (!response.ok) throw new Error(result.error || 'Could not update the order.');
                 const order = orders.find(item => item.orderId === Number(button.dataset.id));
                 if (order) order.status = result.status;
+                if (['Done', 'Cancelled'].includes(result.status)) {
+                    orders = orders.filter(item => item.orderId !== Number(button.dataset.id));
+                }
                 renderOrders();
             } catch (error) {
                 button.disabled = false;
@@ -95,9 +90,8 @@
             }
         });
 
-        document.getElementById('refresh-orders').addEventListener('click', loadOrders);
         loadOrders();
-        window.setInterval(loadOrders, 20000);
+        window.setInterval(loadOrders, 2000);
     </script>
 </body>
 </html>
