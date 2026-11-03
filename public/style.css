@@ -327,14 +327,14 @@ aside {
 .portal-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 18px;
 }
 
 .portal-card {
     display: flex;
     flex-direction: column;
-    min-height: 150px;
-    padding: 20px;
+    min-height: 180px;
+    padding: 26px;
     color: var(--ink);
     background: var(--surface);
     border: 1px solid var(--border);
@@ -393,8 +393,8 @@ aside {
     }
 
     .portal-card {
-        min-height: 130px;
-        padding: 18px;
+        min-height: 150px;
+        padding: 22px;
     }
 }
 
