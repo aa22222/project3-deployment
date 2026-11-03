@@ -55,6 +55,7 @@ async function renderCashier(req, res) {
 
 app.get('/', (req, res) => res.render('portal'));
 app.get('/cashier', renderCashier);
+app.get('/kitchen', (req, res) => res.render('kitchen'));
 app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;
     const allowedCustomizations = new Set(['Boba', 'Less ice', 'More ice', 'Less sweet']);
