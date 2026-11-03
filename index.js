@@ -50,7 +50,7 @@ async function renderCashier(req, res) {
     }
 }
 
-app.get('/', renderCashier);
+app.get('/', (req, res) => res.render('portal'));
 app.get('/cashier', renderCashier);
 app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;
