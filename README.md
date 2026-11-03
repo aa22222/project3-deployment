@@ -54,6 +54,9 @@ app stops. Database mode stores orders, items, and kitchen status in PostgreSQL.
 At checkout, choose Cash, Credit or debit card, or Mobile pay. The selected
 method is saved with the order. Card and mobile payments are recorded as the
 selected method only; processing them requires connecting a payment provider.
+After a cashier order is submitted, use **Print receipt** to open the browser's
+print dialog. The receipt includes the order number, time, items, customizations,
+payment method, and total.
 
 ## `.env` File Format
 

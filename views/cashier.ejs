@@ -55,6 +55,24 @@
         </aside>
     </main>
     <% if (pageTitle === 'Cashier') { %>
+    <section id="receipt" hidden aria-labelledby="receipt-title">
+        <article class="receipt-paper">
+            <h2 id="receipt-title">Boba Shop</h2>
+            <p class="receipt-subtitle">Customer receipt</p>
+            <div class="receipt-details">
+                <div><span>Order</span><strong id="receipt-order-number"></strong></div>
+                <div><span>Date</span><strong id="receipt-date"></strong></div>
+                <div><span>Payment</span><strong id="receipt-payment"></strong></div>
+            </div>
+            <div id="receipt-items" class="receipt-items"></div>
+            <div class="receipt-total"><span>Total</span><strong id="receipt-total"></strong></div>
+            <p class="receipt-thanks">Thank you!</p>
+            <div class="receipt-actions">
+                <button id="print-receipt" type="button">Print receipt</button>
+                <button id="new-order" type="button">New order</button>
+            </div>
+        </article>
+    </section>
     <dialog id="drink-editor" aria-labelledby="editor-title" aria-describedby="editor-hint">
         <form id="drink-form">
             <h2 id="editor-title">Customize drink</h2>
@@ -256,6 +274,19 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not submit the order.');
+                if (document.getElementById('receipt')) {
+                    const receiptLines = cart.map(line => ({...line, customizations: [...line.customizations]}));
+                    document.getElementById('receipt-order-number').textContent = `#${result.orderId}`;
+                    document.getElementById('receipt-date').textContent = new Intl.DateTimeFormat(undefined, {dateStyle: 'medium', timeStyle: 'short'}).format(new Date());
+                    document.getElementById('receipt-payment').textContent = result.paymentMethod;
+                    document.getElementById('receipt-total').textContent = money(Number(result.total));
+                    document.getElementById('receipt-items').innerHTML = receiptLines.map(line => `
+                        <div class="receipt-line">
+                            <div><strong>${escapeHtml(line.name)}</strong><small>${line.quantity} × ${money(linePrice(line))}${line.customizations.length ? ` · ${escapeHtml(line.customizations.join(', '))}` : ''}</small></div>
+                            <span>${money(linePrice(line) * line.quantity)}</span>
+                        </div>`).join('');
+                    document.getElementById('receipt').hidden = false;
+                }
                 cart.length = 0;
                 document.getElementById('payment-method').value = '';
                 renderCart();
@@ -265,6 +296,12 @@
             } finally {
                 submitButton.disabled = cart.length === 0;
             }
+        });
+
+        document.getElementById('print-receipt')?.addEventListener('click', () => window.print());
+        document.getElementById('new-order')?.addEventListener('click', () => {
+            document.getElementById('receipt').hidden = true;
+            document.querySelector('.drink')?.focus();
         });
 
         renderCart();
