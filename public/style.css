@@ -35,6 +35,22 @@ header {
     border-bottom: 1px solid var(--border);
 }
 
+.portal-back {
+    margin-left: auto;
+    padding: 9px 13px;
+    color: var(--green-dark);
+    font-size: .92rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: #f4f8f3;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.portal-back:hover {
+    background: #eaf3e8;
+}
+
 h1 {
     margin: 0;
     font-size: clamp(1.25rem, 2.3vw, 1.8rem);
