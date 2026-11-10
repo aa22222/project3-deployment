@@ -7,19 +7,22 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <header>
+    <header class="manager-header">
         <div>
-            <h1>Boba Shop POS</h1>
-            <p class="subtitle">Manager</p>
+            <p class="manager-eyebrow">BOBA SHOP · OPERATIONS</p>
+            <h1>Manager dashboard</h1>
+            <p class="subtitle">Inventory and team, all in one place</p>
         </div>
-        <a class="manager-back-link" href="/">Back to Portal Hub</a>
+        <a class="manager-back-link" href="/">Portal hub <span aria-hidden="true">↗</span></a>
     </header>
     <main class="manager-main">
         <section class="panel manager-panel">
-            <p class="manager-section-link"><a href="/manager/payroll">View employee payroll →</a></p>
-            <h2>Inventory</h2>
+            <div class="manager-panel-heading">
+                <div><p class="manager-kicker">STORE OPERATIONS</p><h2>Inventory</h2></div>
+                <a class="manager-section-link" href="/manager/payroll">Employee payroll <span aria-hidden="true">→</span></a>
+            </div>
             <p>Enter the total stock on hand, then save that row. Refresh to see stock changes from orders.</p>
-            <% if (useMockDatabase) { %><p>Demo inventory — changes reset when the server restarts.</p><% } %>
+            <% if (useMockDatabase) { %><p class="manager-demo-note">Demo data · changes reset when the server restarts.</p><% } %>
             <form action="/manager" class="inventory-toolbar">
                 <label class="menu-search" for="inventory-search">Find an ingredient
                     <input id="inventory-search" type="search" placeholder="Search inventory…" autocomplete="off" aria-controls="inventory-list">

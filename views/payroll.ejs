@@ -7,16 +7,19 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <header>
-        <div><h1>Boba Shop POS</h1><p class="subtitle">Manager · Payroll</p></div>
-        <a class="manager-back-link" href="/manager">Back to Manager</a>
+    <header class="manager-header">
+        <div><p class="manager-eyebrow">BOBA SHOP · OPERATIONS</p><h1>Employee payroll</h1><p class="subtitle">Your team and compensation details</p></div>
+        <a class="manager-back-link" href="/manager">← Inventory</a>
     </header>
     <main class="manager-main">
         <section class="panel manager-panel">
-            <h2>Employee Payroll</h2>
-            <p>Employee and compensation information from the employees table.</p>
-            <% if (error) { %><p class="payroll-message" role="alert"><%= error %></p>
-            <% } else if (!employees.length || !columns.length) { %><p class="payroll-message" role="status">No payroll information found.</p>
+            <div class="manager-panel-heading">
+                <div><p class="manager-kicker">TEAM OVERVIEW</p><h2>Payroll details</h2></div>
+                <span class="payroll-count"><%= employees.length %> <%= employees.length === 1 ? 'employee' : 'employees' %></span>
+            </div>
+            <p>Employee and compensation information from your staff records.</p>
+            <% if (error) { %><p class="payroll-message payroll-error" role="alert"><%= error %></p>
+            <% } else if (!employees.length || !columns.length) { %><div class="payroll-empty" role="status"><span class="payroll-empty-icon" aria-hidden="true">✦</span><strong>No employee records yet</strong><span>Add employee records to the <code>employee</code> table to see payroll here.</span></div>
             <% } else { %>
             <div class="payroll-table-wrap">
                 <table class="payroll-table">

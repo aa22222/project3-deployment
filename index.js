@@ -76,8 +76,11 @@ app.get('/manager', async (req, res) => {
 app.get('/manager/payroll', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
-        // Only expose employee identifiers, names, roles, and compensation fields.
-        const employees = useMockDatabase ? mockEmployees : (await pool.query('SELECT * FROM employees')).rows;
+        const employees = useMockDatabase ? mockEmployees : (await pool.query(
+            'SELECT employee_id, first_name, last_name, hourly_wage AS hourly_rate, hours_worked, ' +
+            'ROUND(hourly_wage * hours_worked, 2) AS gross_pay ' +
+            'FROM employee ORDER BY last_name, first_name, employee_id'
+        )).rows;
         const safeColumns = employees.length ? Object.keys(employees[0]).filter(column =>
             /(^id$|employee.*id|first.*name|last.*name|full.*name|employee.*name|position|role|title|salary|wage|pay|hour|rate|commission|bonus)/i.test(column)
         ) : [];

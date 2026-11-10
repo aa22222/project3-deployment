@@ -3,26 +3,29 @@
 
 CREATE TABLE IF NOT EXISTS menu_item (
     menu_item_id INTEGER PRIMARY KEY,
-    item_name TEXT NOT NULL,
-    current_price NUMERIC(10, 2) NOT NULL CHECK (current_price >= 0)
+    item_name VARCHAR NOT NULL UNIQUE,
+    current_price NUMERIC(8, 2) NOT NULL CHECK (current_price >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS inventory_item (
     inventory_item_id INTEGER PRIMARY KEY,
-    item_name TEXT NOT NULL,
-    quantity_in_stock NUMERIC(12, 2) NOT NULL DEFAULT 0 CHECK (quantity_in_stock >= 0)
+    item_name VARCHAR NOT NULL UNIQUE,
+    item_type VARCHAR NOT NULL CHECK (item_type IN ('ingredient', 'topping', 'supply')),
+    quantity_in_stock NUMERIC(12, 2) NOT NULL CHECK (quantity_in_stock >= 0),
+    unit VARCHAR NOT NULL,
+    reorder_level NUMERIC(12, 2) NOT NULL DEFAULT 0 CHECK (reorder_level >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS menu_item_ingredient (
-    menu_item_id INTEGER NOT NULL REFERENCES menu_item(menu_item_id) ON DELETE CASCADE,
+    menu_item_id INTEGER NOT NULL REFERENCES menu_item(menu_item_id),
     inventory_item_id INTEGER NOT NULL REFERENCES inventory_item(inventory_item_id),
-    quantity_required NUMERIC(12, 2) NOT NULL CHECK (quantity_required > 0),
+    quantity_required NUMERIC(12, 4) NOT NULL CHECK (quantity_required > 0),
     PRIMARY KEY (menu_item_id, inventory_item_id)
 );
 
 CREATE TABLE IF NOT EXISTS customer_order (
-    order_id INTEGER PRIMARY KEY,
-    order_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    order_id BIGINT PRIMARY KEY,
+    order_time TIMESTAMP NOT NULL,
     total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0),
     payment_method TEXT NOT NULL DEFAULT 'Cash'
 );
@@ -37,11 +40,11 @@ ALTER TABLE customer_order
     CHECK (payment_method IN ('Cash', 'Card', 'Mobile pay'));
 
 CREATE TABLE IF NOT EXISTS order_item (
-    order_item_id INTEGER PRIMARY KEY,
-    order_id INTEGER NOT NULL REFERENCES customer_order(order_id) ON DELETE CASCADE,
+    order_item_id BIGINT PRIMARY KEY,
+    order_id BIGINT NOT NULL REFERENCES customer_order(order_id) ON DELETE CASCADE,
     menu_item_id INTEGER NOT NULL REFERENCES menu_item(menu_item_id),
     quantity INTEGER NOT NULL CHECK (quantity > 0),
-    unit_price NUMERIC(10, 2) NOT NULL CHECK (unit_price >= 0),
+    unit_price NUMERIC(8, 2) NOT NULL CHECK (unit_price >= 0),
     customizations TEXT NOT NULL DEFAULT ''
 );
 
@@ -49,6 +52,16 @@ CREATE TABLE IF NOT EXISTS kitchen_order_status (
     order_id INTEGER PRIMARY KEY REFERENCES customer_order(order_id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'New',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Employee information used by the manager payroll page. No sample employees
+-- are inserted so payroll reflects only staff entered for this shop.
+CREATE TABLE IF NOT EXISTS employee (
+    employee_id INTEGER PRIMARY KEY,
+    first_name VARCHAR NOT NULL,
+    last_name VARCHAR NOT NULL,
+    hourly_wage NUMERIC(7, 2) NOT NULL CHECK (hourly_wage >= 0),
+    hours_worked NUMERIC(7, 2) NOT NULL DEFAULT 0 CHECK (hours_worked >= 0)
 );
 
 ALTER TABLE kitchen_order_status
@@ -68,8 +81,8 @@ FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM menu_item)
 ON CONFLICT (menu_item_id) DO NOTHING;
 
-INSERT INTO inventory_item(inventory_item_id, item_name, quantity_in_stock)
-SELECT 1, 'Drink servings', 100000
+INSERT INTO inventory_item(inventory_item_id, item_name, item_type, quantity_in_stock, unit, reorder_level)
+SELECT 1, 'Drink servings', 'ingredient', 100000, 'servings', 0
 WHERE NOT EXISTS (SELECT 1 FROM inventory_item)
 ON CONFLICT (inventory_item_id) DO NOTHING;
 
