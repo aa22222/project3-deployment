@@ -14,6 +14,13 @@ const mockMenu = [
     { menu_item_id: 3, item_name: 'Mango Green Tea', current_price: 4.79 },
     { menu_item_id: 4, item_name: 'Strawberry Smoothie', current_price: 5.99 }
 ];
+const drinkCustomizations = ['Boba', 'Less ice', 'More ice', 'Less sweet'];
+function getAvailableCustomizations(itemName) {
+    const name = String(itemName).toLowerCase();
+    const isFood = /\b(mochi|soup|pie|cake|cookie|pastry|sandwich|salad|snack)\b/.test(name);
+    const isDrink = /\b(tea|smoothie|coffee|latte|espresso|juice|lemonade|soda|boba|frappe|milkshake|drink)\b/.test(name);
+    return isDrink && !isFood ? drinkCustomizations : [];
+}
 let nextMockOrderId = 1;
 const mockOrders = [];
 const mockInventory = [{ inventory_item_id: 1, item_name: 'Drink servings', quantity_in_stock: 100000 }];
@@ -48,12 +55,18 @@ app.use(express.json());
 async function renderOrderPage(req, res, view, pageTitle) {
     try {
         if (useMockDatabase) {
-            return res.render(view, { menuItems: mockMenu, pageTitle });
+            return res.render(view, { menuItems: mockMenu.map(item => ({
+                ...item,
+                customizations: getAvailableCustomizations(item.item_name)
+            })), pageTitle });
         }
         const result = await pool.query(
             'SELECT menu_item_id, item_name, current_price FROM menu_item ORDER BY item_name'
         );
-        res.render(view, { menuItems: result.rows, pageTitle });
+        res.render(view, { menuItems: result.rows.map(item => ({
+            ...item,
+            customizations: getAvailableCustomizations(item.item_name)
+        })), pageTitle });
     } catch (error) {
         console.error(`Could not load ${pageTitle.toLowerCase()} menu:`, error);
         res.status(500).send('Could not load the menu. Check the database connection.');
@@ -119,7 +132,6 @@ app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;
     const paymentMethod = req.body && req.body.paymentMethod;
     const allowedPaymentMethods = new Set(['Cash', 'Card', 'Mobile pay']);
-    const allowedCustomizations = new Set(['Boba', 'Less ice', 'More ice', 'Less sweet']);
     if (!allowedPaymentMethods.has(paymentMethod)) {
         return res.status(400).json({ error: 'Choose Cash, Credit or debit card, or Mobile pay.' });
     }
@@ -136,9 +148,11 @@ app.post('/orders', async (req, res) => {
                 const quantity = Number(item.quantity);
                 const customizations = Array.isArray(item.customizations) ? item.customizations : [];
                 const menuItem = menuById.get(menuItemId);
+                const allowedCustomizations = new Set(getAvailableCustomizations(menuItem?.item_name));
                 if (!menuItem || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 1000 ||
                     customizations.some(value => !allowedCustomizations.has(value)) ||
-                    new Set(customizations).size !== customizations.length) {
+                    new Set(customizations).size !== customizations.length ||
+                    (customizations.includes('Less ice') && customizations.includes('More ice'))) {
                     throw new Error('One or more order items are invalid. Refresh the page and try again.');
                 }
                 const unitPrice = Number(menuItem.current_price) + (customizations.includes('Boba') ? 0.99 : 0);
@@ -176,9 +190,11 @@ app.post('/orders', async (req, res) => {
             const quantity = Number(item.quantity);
             const customizations = Array.isArray(item.customizations) ? item.customizations : [];
             const menuItem = menuById.get(menuItemId);
+            const allowedCustomizations = new Set(getAvailableCustomizations(menuItem?.item_name));
             if (!menuItem || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 1000 ||
                 customizations.some(value => !allowedCustomizations.has(value)) ||
-                new Set(customizations).size !== customizations.length) {
+                new Set(customizations).size !== customizations.length ||
+                (customizations.includes('Less ice') && customizations.includes('More ice'))) {
                 throw new Error('One or more order items are invalid. Refresh the page and try again.');
             }
             const unitPrice = Number(menuItem.current_price) + (customizations.includes('Boba') ? 0.99 : 0);

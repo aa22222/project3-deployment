@@ -8,7 +8,7 @@
 </head>
 <body class="order-page <%= pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
     <header>
-        <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose your drinks and customize your order' : 'Select a drink to customize it and add it to the order' %></p></div>
+        <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose menu items and customize your order' : 'Select a menu item to customize it and add it to the order' %></p></div>
     </header>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
@@ -21,19 +21,19 @@
             <% } %>
             <div id="menu">
                 <% menuItems.forEach(item => { %>
-                    <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>">
+                        <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>">
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
                     </button>
                 <% }); %>
-                <% if (menuItems.length === 0) { %><p>No menu drinks are available yet.</p><% } %>
+                <% if (menuItems.length === 0) { %><p>No menu items are available yet.</p><% } %>
             </div>
         </section>
         <aside class="panel" aria-labelledby="order-heading">
             <h2 id="order-heading" class="cart-title">Order <% if (pageTitle === 'Cashier') { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
             <div id="cart" aria-live="polite"></div>
             <% if (pageTitle === 'Customer Kiosk') { %>
-            <div class="customizations" aria-label="Order customizations">
+            <div class="customizations" aria-label="Order customizations" hidden>
                 <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
                 <button type="button" data-customization="Less ice">Less ice</button>
                 <button type="button" data-customization="More ice">More ice</button>
@@ -75,25 +75,26 @@
     <% if (pageTitle === 'Cashier') { %>
     <dialog id="drink-editor" aria-labelledby="editor-title" aria-describedby="editor-hint">
         <form id="drink-form">
-            <h2 id="editor-title">Customize drink</h2>
-            <p id="editor-hint">Choose options for this order line. To order different options, add the drink again.</p>
+            <h2 id="editor-title">Customize item</h2>
+            <p id="editor-hint">Choose options for this order line. To order different options, add the item again.</p>
             <label class="quantity-label" for="drink-quantity">Quantity</label>
             <input id="drink-quantity" name="quantity" type="number" min="1" max="1000" step="1" value="1" required autofocus>
-            <fieldset>
+            <fieldset id="topping-options">
                 <legend>Toppings</legend>
                 <label class="drink-option"><input id="drink-boba" name="boba" type="checkbox"> Add boba (+$0.99 per drink)</label>
             </fieldset>
-            <fieldset>
+            <fieldset id="ice-options">
                 <legend>Ice level</legend>
                 <label class="drink-option"><input type="radio" name="ice" value="" checked> Regular ice</label>
                 <label class="drink-option"><input type="radio" name="ice" value="Less ice"> Less ice</label>
                 <label class="drink-option"><input type="radio" name="ice" value="More ice"> More ice</label>
             </fieldset>
-            <fieldset>
+            <fieldset id="sweetness-options">
                 <legend>Sweetness</legend>
                 <label class="drink-option"><input type="radio" name="sweetness" value="" checked> Regular sweetness</label>
                 <label class="drink-option"><input type="radio" name="sweetness" value="Less sweet"> Less sweet</label>
             </fieldset>
+            <p id="editor-no-customizations" hidden>This item has no available customizations.</p>
             <p class="editor-total">Item total <output id="item-total" data-testid="item-total" aria-live="polite">$0.00</output></p>
             <p id="editor-error" role="alert"></p>
             <div class="editor-actions">
@@ -130,6 +131,11 @@
             form.elements.boba.checked = drink.customizations.includes('Boba');
             form.elements.ice.value = drink.customizations.find(value => value.endsWith('ice')) || '';
             form.elements.sweetness.value = drink.customizations.includes('Less sweet') ? 'Less sweet' : '';
+            const available = new Set(drink.customizationOptions);
+            document.getElementById('topping-options').hidden = !available.has('Boba');
+            document.getElementById('ice-options').hidden = !available.has('Less ice') && !available.has('More ice');
+            document.getElementById('sweetness-options').hidden = !available.has('Less sweet');
+            document.getElementById('editor-no-customizations').hidden = available.size > 0;
             document.getElementById('editor-title').textContent = `Customize ${drink.name}`;
             document.getElementById('save-drink').textContent = index === null ? 'Add to order' : 'Save changes';
             document.getElementById('editor-error').textContent = '';
@@ -138,7 +144,8 @@
         }
 
         function editorChoices() {
-            return [form.elements.boba.checked ? 'Boba' : '', form.elements.ice.value, form.elements.sweetness.value].filter(Boolean);
+            return [form.elements.boba.checked ? 'Boba' : '', form.elements.ice.value, form.elements.sweetness.value]
+                .filter(value => value && selectedDrink.customizationOptions.includes(value));
         }
 
         function updateItemTotal() {
@@ -180,16 +187,17 @@
 
         document.querySelectorAll('.drink').forEach(button => button.addEventListener('click', () => {
             const id = Number(button.dataset.id);
-            if (editor) return openEditor({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: []}, null, button);
+            const customizationOptions = button.dataset.customizations ? button.dataset.customizations.split('|') : [];
+            if (editor) return openEditor({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: [], customizationOptions}, null, button);
             const line = cart.find(item => item.menuItemId === id && item.customizations.length === 0);
             if (line) line.quantity++;
-            else cart.push({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: []});
+            else cart.push({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: [], customizationOptions});
             renderCart();
         }));
 
         function renderCart() {
             const cartElement = document.getElementById('cart');
-            if (cart.length === 0) cartElement.innerHTML = '<p class="empty">Your order is empty.<br>Choose a drink to get started.</p>';
+            if (cart.length === 0) cartElement.innerHTML = '<p class="empty">Your order is empty.<br>Choose a menu item to get started.</p>';
             else cartElement.innerHTML = cart.map((line, index) => `
                 <div class="cart-line">
                     <div>
@@ -213,6 +221,11 @@
                 orderCount.textContent = `${count} item${count === 1 ? '' : 's'}`;
             }
             document.getElementById('submit').disabled = cart.length === 0;
+            const customizationPanel = document.querySelector('.customizations');
+            if (customizationPanel) customizationPanel.hidden = !cart.some(line => line.customizationOptions.length > 0);
+            document.querySelectorAll('[data-customization]').forEach(button => {
+                button.hidden = !cart.some(line => line.customizationOptions.includes(button.dataset.customization));
+            });
         }
 
         document.getElementById('cart').addEventListener('click', event => {
@@ -222,7 +235,7 @@
             if (button.dataset.action === 'edit') return openEditor(cart[index], index, button);
             if (button.dataset.action === 'remove') cart.splice(index, 1);
             if (button.dataset.action === 'increase') {
-                if (cart[index].quantity >= 1000) return showNotice('A drink quantity cannot exceed 1000 per order line.');
+                if (cart[index].quantity >= 1000) return showNotice('An item quantity cannot exceed 1000 per order line.');
                 cart[index].quantity++;
             }
             if (button.dataset.action === 'decrease') {
@@ -234,13 +247,16 @@
 
         document.querySelectorAll('[data-customization]').forEach(button => button.addEventListener('click', () => {
             const customization = button.dataset.customization;
-            if (cart.length === 0) return showNotice('Add a drink to the order first.');
-            const choices = cart.map((line, index) => `${index + 1}. ${line.name}${line.customizations.length ? ' — ' + line.customizations.join(', ') : ''} (${line.quantity})`);
-            const choice = window.prompt(`Which drink should get ${customization.toLowerCase()}? Enter 1–${cart.length}.\n\n${choices.join('\n')}`);
+            if (cart.length === 0) return showNotice('Add an item to the order first.');
+            const eligible = cart.map((line, index) => ({line, index})).filter(({line}) => line.customizationOptions.includes(customization));
+            if (eligible.length === 0) return showNotice(`No items in this order can have ${customization.toLowerCase()}.`);
+            const choices = eligible.map(({line}, index) => `${index + 1}. ${line.name}${line.customizations.length ? ' — ' + line.customizations.join(', ') : ''} (${line.quantity})`);
+            const choice = window.prompt(`Which item should get ${customization.toLowerCase()}? Enter 1–${eligible.length}.\n\n${choices.join('\n')}`);
             if (choice === null) return;
             const index = Number(choice) - 1;
-            if (!Number.isInteger(index) || index < 0 || index >= cart.length) return showNotice('Choose a valid drink number.');
-            const line = cart[index];
+            if (!Number.isInteger(index) || index < 0 || index >= eligible.length) return showNotice('Choose a valid item number.');
+            const cartIndex = eligible[index].index;
+            const line = cart[cartIndex];
             if (line.customizations.includes(customization)) return showNotice(`${line.name} already has ${customization.toLowerCase()}.`);
             let quantity = 1;
             if (line.quantity > 1) {
@@ -249,11 +265,15 @@
                 quantity = Number(input);
                 if (!Number.isInteger(quantity) || quantity < 1 || quantity > line.quantity) return showNotice(`Enter a whole number from 1 to ${line.quantity}.`);
             }
+            const updatedCustomizations = line.customizations.filter(value =>
+                !((customization === 'Less ice' && value === 'More ice') || (customization === 'More ice' && value === 'Less ice'))
+            );
+            updatedCustomizations.push(customization);
             line.quantity -= quantity;
-            if (line.quantity === 0) cart.splice(index, 1);
-            const existing = cart.find(candidate => candidate.menuItemId === line.menuItemId && sameCustomizations(candidate.customizations, [...line.customizations, customization]));
+            if (line.quantity === 0) cart.splice(cartIndex, 1);
+            const existing = cart.find(candidate => candidate.menuItemId === line.menuItemId && sameCustomizations(candidate.customizations, updatedCustomizations));
             if (existing) existing.quantity += quantity;
-            else cart.push({...line, quantity, customizations: [...line.customizations, customization]});
+            else cart.push({...line, quantity, customizations: updatedCustomizations});
             showNotice('');
             renderCart();
         }));
@@ -261,7 +281,7 @@
         function showNotice(message) { document.getElementById('notice').textContent = message; }
 
         document.getElementById('submit').addEventListener('click', async () => {
-            if (cart.length === 0) return showNotice('Tap a drink to add it to the order.');
+            if (cart.length === 0) return showNotice('Tap an item to add it to the order.');
             const paymentMethod = document.getElementById('payment-method').value;
             if (!paymentMethod) return showNotice('Choose a payment method to continue.');
             const submitButton = document.getElementById('submit');
