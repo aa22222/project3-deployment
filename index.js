@@ -16,7 +16,7 @@ const mockMenu = [
 ];
 let nextMockOrderId = 1;
 const mockOrders = [];
-const mockInventory = [{ inventory_item_id: 1, item_name: 'Drink servings', quantity_in_stock: 100000 }];
+const mockInventory = [{ inventory_item_id: 1, item_name: 'Drink servings', item_type: 'ingredient', quantity_in_stock: 100000, unit: 'servings', reorder_level: 20 }];
 const mockEmployees = [
     { employee_id: 1, first_name: 'Alex', last_name: 'Rivera', position: 'Barista', hourly_rate: '16.50', hours_worked: '32.00' },
     { employee_id: 2, first_name: 'Jordan', last_name: 'Lee', position: 'Shift Lead', hourly_rate: '19.00', hours_worked: '36.50' }
@@ -65,7 +65,7 @@ app.get('/manager', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
         const inventory = useMockDatabase ? mockInventory : (await pool.query(
-            'SELECT inventory_item_id, item_name, quantity_in_stock FROM inventory_item ORDER BY item_name'
+            'SELECT inventory_item_id, item_name, item_type, quantity_in_stock, unit, reorder_level FROM inventory_item ORDER BY item_name'
         )).rows;
         res.render('manager', { inventory, error: '', useMockDatabase });
     } catch (error) {
@@ -104,7 +104,7 @@ app.patch('/api/inventory/:id', async (req, res) => {
             if (item) item.quantity_in_stock = quantity;
         } else {
             item = (await pool.query(
-                'UPDATE inventory_item SET quantity_in_stock = $1 WHERE inventory_item_id = $2 RETURNING inventory_item_id, quantity_in_stock',
+                'UPDATE inventory_item SET quantity_in_stock = $1 WHERE inventory_item_id = $2 RETURNING inventory_item_id, quantity_in_stock, reorder_level',
                 [quantity, id]
             )).rows[0];
         }

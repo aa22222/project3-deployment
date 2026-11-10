@@ -3,38 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boba Shop POS — Manager</title>
+    <title>Boba Shop POS - Manager</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <header class="manager-header">
+    <header>
         <div>
-            <p class="manager-eyebrow">BOBA SHOP · OPERATIONS</p>
-            <h1>Manager dashboard</h1>
-            <p class="subtitle">Inventory and team, all in one place</p>
+            <h1>Boba Shop POS</h1>
+            <p class="subtitle">Manager</p>
         </div>
-        <a class="manager-back-link" href="/">Portal hub <span aria-hidden="true">↗</span></a>
+        <a class="manager-back-link" href="/">Back to Portal Hub</a>
     </header>
     <main class="manager-main">
-        <section class="panel manager-panel">
-            <div class="manager-panel-heading">
-                <div><p class="manager-kicker">STORE OPERATIONS</p><h2>Inventory</h2></div>
-                <a class="manager-section-link" href="/manager/payroll">Employee payroll <span aria-hidden="true">→</span></a>
+        <nav class="manager-tabs" aria-label="Manager sections">
+            <a class="manager-tab" href="/manager" aria-current="page">Inventory</a>
+            <a class="manager-tab" href="/manager/payroll">Payroll</a>
+        </nav>
+        <section class="manager-overview" aria-label="Inventory overview">
+            <div class="manager-overview-copy">
+                <h2>Inventory</h2>
+                <p>Update stock quantities and see which items are at their reorder point.</p>
             </div>
-            <p>Enter the total stock on hand, then save that row. Refresh to see stock changes from orders.</p>
-            <% if (useMockDatabase) { %><p class="manager-demo-note">Demo data · changes reset when the server restarts.</p><% } %>
+            <p class="inventory-summary"><strong><%= inventory.length %></strong> items tracked <span aria-hidden="true">&middot;</span> <strong id="low-stock-count"><%= inventory.filter(item => Number(item.quantity_in_stock) <= Number(item.reorder_level || 0)).length %></strong> at reorder point</p>
+        </section>
+        <section class="panel manager-panel">
+            <% if (useMockDatabase) { %><p class="manager-demo-note">Demo inventory - changes reset when the server restarts.</p><% } %>
             <form action="/manager" class="inventory-toolbar">
-                <label class="menu-search" for="inventory-search">Find an ingredient
-                    <input id="inventory-search" type="search" placeholder="Search inventory…" autocomplete="off" aria-controls="inventory-list">
+                <label class="menu-search" for="inventory-search">Find an inventory item
+                    <input id="inventory-search" type="search" placeholder="Search by name..." autocomplete="off" aria-controls="inventory-list">
                 </label>
                 <button type="submit">Refresh inventory</button>
             </form>
             <p id="inventory-message" role="status"><%= error || (inventory.length ? '' : 'No inventory items found.') %></p>
             <div id="inventory-list">
-                <% inventory.forEach(item => { %>
-                <form class="inventory-row" data-id="<%= item.inventory_item_id %>">
-                    <label for="stock-<%= item.inventory_item_id %>"><%= item.item_name %></label>
-                    <input id="stock-<%= item.inventory_item_id %>" aria-label="<%= item.item_name %> stock quantity" type="number" min="0" max="9999999999.99" step="0.01" value="<%= item.quantity_in_stock %>" required>
+                <% inventory.forEach(item => {
+                    const quantity = Number(item.quantity_in_stock);
+                    const reorderLevel = Number(item.reorder_level || 0);
+                    const isLow = quantity <= reorderLevel;
+                    const statusText = quantity <= 0 ? 'Out of stock' : (isLow ? 'At reorder point' : 'In stock');
+                %>
+                <form class="inventory-row" data-id="<%= item.inventory_item_id %>" data-reorder-level="<%= reorderLevel %>">
+                    <div class="inventory-item-info">
+                        <label for="stock-<%= item.inventory_item_id %>"><%= item.item_name %></label>
+                        <span class="inventory-item-meta"><%= item.item_type || 'Inventory item' %></span>
+                    </div>
+                    <div class="inventory-stock-control">
+                        <input id="stock-<%= item.inventory_item_id %>" aria-label="<%= item.item_name %> stock quantity" type="number" min="0" max="9999999999.99" step="0.01" value="<%= item.quantity_in_stock %>" required>
+                        <span><%= item.unit || 'units' %></span>
+                    </div>
+                    <span class="inventory-status" data-stock-status><%= statusText %></span>
                     <button type="submit">Save</button>
                     <span role="status" class="inventory-feedback"></span>
                 </form>
@@ -44,6 +61,10 @@
     </main>
     <script>
         const rows = [...document.querySelectorAll('.inventory-row')];
+        const lowStockCount = document.getElementById('low-stock-count');
+        const updateLowStockCount = () => {
+            lowStockCount.textContent = rows.filter(row => Number(row.querySelector('input').value) <= Number(row.dataset.reorderLevel)).length;
+        };
         document.getElementById('inventory-search').addEventListener('input', event => {
             const search = event.target.value.trim().toLowerCase();
             rows.forEach(row => row.hidden = !row.querySelector('label').textContent.toLowerCase().includes(search));
@@ -54,7 +75,7 @@
             const button = row.querySelector('button'), input = row.querySelector('input'), feedback = row.querySelector('.inventory-feedback');
             button.disabled = true;
             input.disabled = true;
-            feedback.textContent = 'Saving…';
+            feedback.textContent = 'Saving...';
             try {
                 const response = await fetch(`/api/inventory/${row.dataset.id}`, {
                     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -63,6 +84,9 @@
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Could not save inventory.');
                 input.value = result.quantity_in_stock;
+                const quantity = Number(input.value), isLow = quantity <= Number(row.dataset.reorderLevel);
+                row.querySelector('[data-stock-status]').textContent = quantity <= 0 ? 'Out of stock' : (isLow ? 'At reorder point' : 'In stock');
+                updateLowStockCount();
                 feedback.textContent = 'Saved';
             } catch (error) {
                 feedback.textContent = error.message;

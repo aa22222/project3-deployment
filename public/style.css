@@ -497,8 +497,6 @@ aside {
 .inventory-row[hidden] { display: none; }
 .inventory-row input { width: 100%; min-height: 44px; padding: 10px; font: inherit; color: var(--ink); border: 1px solid var(--muted); border-radius: 4px; }
 .inventory-feedback { grid-column: 1 / -1; color: var(--green-dark); }
-.manager-section-link { margin: 0 0 18px !important; text-align: right; }
-.manager-section-link a { color: var(--green-dark); font-weight: 700; }
 .payroll-message { margin-top: 20px !important; }
 .payroll-table-wrap { margin-top: 22px; overflow-x: auto; }
 .payroll-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -521,68 +519,35 @@ aside {
     .cashier-page aside { position: static; }
 }
 
-/* Manager portal */
-.manager-header {
-    position: relative;
-    overflow: hidden;
-    min-height: 150px;
-    padding: 28px max(32px, calc((100vw - 1080px) / 2));
-    background: radial-gradient(ellipse at 88% 15%, #603842 0, transparent 34%), #252321;
-}
-.manager-header::after {
-    position: absolute;
-    right: 9%;
-    bottom: -104px;
-    width: 250px;
-    height: 150px;
-    border: 1px solid rgb(255 255 255 / 9%);
-    border-radius: 50%;
-    content: "";
-    transform: rotate(-25deg);
-}
-.manager-header > * { position: relative; z-index: 1; }
-.manager-header h1 { font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: -.035em; }
-.manager-eyebrow, .manager-kicker { margin: 0 0 8px; color: #d9a9a0; font-size: .68rem; font-weight: 800; letter-spacing: .17em; }
-.manager-header .subtitle { color: #d0c5c1; }
-.manager-back-link { border-color: #786b68; border-radius: 999px; transition: background .18s, border-color .18s; }
-.manager-back-link:hover { background: #49383b; border-color: #b98d92; }
-.manager-main { max-width: 1080px; padding: 40px 28px 64px; }
-.manager-panel { padding: clamp(22px, 4vw, 38px); border-color: #e4dbd1; border-radius: 16px; box-shadow: 0 14px 38px rgb(47 34 26 / 7%); }
-.manager-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 10px; }
-.manager-panel-heading h2 { margin: 0; font-size: 1.9rem; letter-spacing: -.025em; }
-.manager-kicker { margin-bottom: 7px; color: var(--green); }
-.manager-panel > p:not(.manager-kicker) { line-height: 1.6; }
-.manager-section-link { flex: none; margin: 0 !important; padding: 11px 16px; border: 1px solid #ead6d5; border-radius: 999px; background: #fcf4f2; color: var(--green-dark); text-align: left; text-decoration: none; }
-.manager-section-link:hover { background: #f5e7e4; }
-.manager-section-link span { margin-left: 5px; }
-.manager-demo-note { margin-top: 12px !important; padding: 10px 13px; border-radius: 8px; background: #fff5e5; color: #76542c !important; font-size: .88rem; }
-.inventory-toolbar { margin: 26px 0 12px; }
-.inventory-toolbar button, .inventory-row button { border-radius: 9px; font-weight: 700; transition: transform .16s, background .16s; }
-.inventory-toolbar button:hover, .inventory-row button:hover { background: var(--green-dark); transform: translateY(-1px); }
-.inventory-row { grid-template-columns: minmax(0, 1fr) 150px 90px; gap: 16px; padding: 15px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fffefa; }
-.inventory-row + .inventory-row { margin-top: 9px; }
-.inventory-row label { font-weight: 650; }
-.inventory-row input { border-color: #d8cec3; border-radius: 8px; }
-.inventory-feedback { min-height: 1.1em; font-size: .82rem; }
-.payroll-count { padding: 8px 13px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: #faf7f2; font-size: .85rem; font-weight: 700; white-space: nowrap; }
-.payroll-table-wrap { margin-top: 24px; border: 1px solid var(--line); border-radius: 12px; }
-.payroll-table { border-spacing: 0; }
-.payroll-table th, .payroll-table td { padding: 15px 18px; border-bottom: 1px solid var(--line); }
-.payroll-table th { background: #f8f3ec; color: #74665e; font-size: .73rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.payroll-table tbody tr:last-child td { border-bottom: 0; }
-.payroll-table tbody tr:hover { background: #fff9f5; }
-.payroll-empty { display: grid; justify-items: center; gap: 9px; margin-top: 24px; padding: 44px 22px; border: 1px dashed #d7c9bd; border-radius: 12px; color: var(--muted); text-align: center; }
-.payroll-empty strong { color: var(--ink); font-size: 1.05rem; }
-.payroll-empty-icon { display: grid; width: 42px; height: 42px; place-items: center; margin-bottom: 3px; border-radius: 50%; background: #f7e9e7; color: var(--green); font-size: 1.2rem; }
-.payroll-empty code { padding: 2px 5px; border-radius: 4px; background: #f2eee8; color: var(--ink); }
-.payroll-error { padding: 13px 15px; border: 1px solid #edc9c4; border-radius: 9px; background: #fff1ef; color: #923b32 !important; }
-@media (max-width: 600px) {
-    .manager-header { min-height: 130px; padding: 22px 18px; }
-    .manager-main { padding: 22px 14px 44px; }
-    .manager-panel-heading { align-items: flex-start; flex-direction: column; }
-    .manager-section-link { align-self: flex-start; }
-    .inventory-row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
-    .inventory-row label { grid-column: 1 / -1; }
-    .inventory-row input { grid-column: 1; }
-    .inventory-row button { grid-column: 2; }
+/* Manager section layout */
+.manager-tabs { display: flex; gap: 22px; margin: 0 0 22px; border-bottom: 1px solid var(--border); }
+.manager-tab { padding: 0 2px 10px; color: var(--muted); text-decoration: none; }
+.manager-tab[aria-current="page"] { margin-bottom: -1px; border-bottom: 2px solid var(--green); color: var(--green-dark); font-weight: 700; }
+.manager-panel-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.manager-panel-heading h2 { margin-bottom: 10px; }
+.payroll-count { color: var(--muted); font-size: .9rem; }
+.payroll-empty { margin-top: 20px !important; }
+.manager-overview { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 20px; }
+.manager-overview-copy h2 { margin-bottom: 6px; }
+.manager-overview-copy p { margin: 0; color: var(--muted); }
+.inventory-summary { margin: 0; color: var(--muted); }
+.inventory-summary strong { color: var(--ink); }
+.inventory-item-meta { display: block; margin-top: 3px; color: var(--muted); font-size: .82rem; }
+.inventory-stock-control { display: flex; align-items: center; gap: 8px; }
+.inventory-stock-control input { min-width: 0; }
+.inventory-stock-control > span { color: var(--muted); font-size: .85rem; }
+.inventory-status { color: var(--muted); font-size: .88rem; }
+.manager-demo-note { margin: 0 0 12px !important; }
+.manager-panel #inventory-list .inventory-row { grid-template-columns: minmax(0, 1fr) 180px 130px 80px; gap: 12px; }
+.manager-panel .inventory-feedback { grid-column: 1 / -1; min-height: 0; }
+.manager-panel .inventory-feedback:empty { display: none; }
+@media (max-width: 650px) {
+    .manager-main { padding: 20px 16px; }
+    .manager-overview { align-items: flex-start; flex-direction: column; }
+    .inventory-toolbar { align-items: stretch; flex-direction: column; }
+    .manager-panel #inventory-list .inventory-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+    .inventory-item-info { grid-column: 1 / -1; }
+    .inventory-stock-control { grid-column: 1; }
+    .inventory-status { grid-column: 1; }
+    .manager-panel #inventory-list .inventory-row > button { grid-column: 2; grid-row: 2; }
 }
