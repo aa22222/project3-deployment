@@ -1,0 +1,28 @@
+<details id="rewards-panel" class="rewards-panel">
+    <summary>Boba Rewards · earn points</summary>
+    <p>Earn 1 point per $1 paid. Use 50 points for $5 off an order of $5 or more.</p>
+    <form id="rewards-contact-form">
+        <label for="rewards-contact">Phone number or email</label>
+        <input id="rewards-contact" type="text" autocomplete="off" maxlength="254" placeholder="(555) 123-4567 or you@example.com" required>
+        <p class="rewards-help">We'll send a one-time sign-in code. US numbers can omit +1; include the country code for other numbers.</p>
+        <label class="rewards-choice"><input id="rewards-opt-in" type="checkbox"> Text me Boba Shop rewards updates (optional).</label>
+        <p class="rewards-help">Up to one rewards text per order. Msg &amp; data rates may apply. Reply STOP to unsubscribe, HELP for help. Joining and text updates are optional.</p>
+        <button type="submit">Send code</button>
+    </form>
+    <form id="rewards-code-form" hidden>
+        <label for="rewards-code">6-digit verification code</label>
+        <input id="rewards-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+        <button type="submit">Verify</button>
+        <button id="rewards-change-contact" type="button">Change phone/email</button>
+    </form>
+    <div id="rewards-account" hidden>
+        <p><strong id="rewards-balance"></strong></p>
+        <p id="rewards-contacts"></p>
+        <label class="rewards-choice"><input id="rewards-redeem" type="checkbox"> Use 50 points for $5 off</label>
+        <p id="rewards-progress" class="rewards-help"></p>
+        <label class="rewards-choice"><input id="rewards-texts" type="checkbox"> Reward texts to my verified phone</label>
+        <button id="rewards-link" type="button">Link phone/email</button>
+        <button id="rewards-sign-out" type="button">Remove from this order</button>
+    </div>
+    <p id="rewards-message" role="status" aria-live="polite"></p>
+</details>

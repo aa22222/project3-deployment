@@ -279,6 +279,19 @@ aside {
     border-top: 1px solid var(--line);
 }
 
+.rewards-panel { margin-bottom: 20px; padding: 14px; border: 1px solid var(--border); border-radius: 4px; }
+.rewards-panel summary { min-height: 32px; font-weight: 700; cursor: pointer; }
+.rewards-panel p { font-size: .88rem; line-height: 1.5; }
+.rewards-panel form { display: grid; gap: 10px; }
+.rewards-panel [hidden] { display: none; }
+.rewards-panel input:not([type="checkbox"]) { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--muted); border-radius: 4px; }
+.rewards-panel button { min-height: 44px; margin: 3px 0; padding: 8px 12px; font: inherit; color: var(--green-dark); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+.rewards-panel button:disabled { opacity: .6; cursor: wait; }
+.rewards-choice { display: flex; align-items: start; gap: 8px; margin: 10px 0; font-size: .88rem; line-height: 1.5; }
+.rewards-choice input { min-width: 20px; min-height: 20px; accent-color: var(--green); }
+.rewards-help { color: var(--muted); }
+#rewards-message { overflow-wrap: anywhere; }
+
 .payment-label {
     display: block;
     margin-bottom: 7px;

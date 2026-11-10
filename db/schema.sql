@@ -48,6 +48,24 @@ CREATE TABLE IF NOT EXISTS order_item (
     customizations TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS rewards_customer (
+    customer_id BIGSERIAL PRIMARY KEY,
+    phone TEXT UNIQUE,
+    email TEXT UNIQUE,
+    points INTEGER NOT NULL DEFAULT 0 CHECK (points >= 0),
+    sms_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
+    CHECK (phone IS NOT NULL OR email IS NOT NULL)
+);
+
+-- One entry per order; written in the same transaction as inventory and points.
+CREATE TABLE IF NOT EXISTS rewards_activity (
+    order_id BIGINT PRIMARY KEY REFERENCES customer_order(order_id),
+    customer_id BIGINT NOT NULL REFERENCES rewards_customer(customer_id),
+    points_earned INTEGER NOT NULL CHECK (points_earned >= 0),
+    points_redeemed INTEGER NOT NULL CHECK (points_redeemed >= 0),
+    discount_amount NUMERIC(10, 2) NOT NULL CHECK (discount_amount >= 0)
+);
+
 CREATE TABLE IF NOT EXISTS kitchen_order_status (
     order_id INTEGER PRIMARY KEY REFERENCES customer_order(order_id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'New',

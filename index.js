@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv').config();
+const { createRewards } = require('./lib/rewards');
 
 // Create express app
 const app = express();
@@ -51,6 +52,8 @@ process.on('SIGINT', function() {
 app.set("view engine", "ejs");
 app.use(express.static('public'));
 app.use(express.json());
+const rewards = createRewards({ pool, mock: useMockDatabase });
+app.use('/api/rewards', rewards.router);
 
 async function renderOrderPage(req, res, view, pageTitle) {
     try {
@@ -162,11 +165,13 @@ app.post('/orders', async (req, res) => {
                 return { quantity, customizations, unitPrice };
             });
             const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+            const reward = await rewards.prepareOrder(req.body.rewardsToken, req.body.redeemReward, Math.round(total * 100));
             const orderId = nextMockOrderId++;
+            await rewards.completeOrder(reward, orderId);
             mockOrders.push({
                 orderId,
                 orderTime: new Date().toISOString(),
-                total: total.toFixed(2),
+                total: (reward.totalCents / 100).toFixed(2),
                 paymentMethod,
                 items: items.map((item, index) => ({
                     name: mockMenu.find(menuItem => menuItem.menu_item_id === Number(submittedItems[index].menuItemId)).item_name,
@@ -175,7 +180,7 @@ app.post('/orders', async (req, res) => {
                     customizations: item.customizations.join(', ')
                 }))
             });
-            return res.json({ orderId, total: total.toFixed(2), paymentMethod });
+            return res.json({ orderId, subtotal: total.toFixed(2), discount: (reward.discountCents / 100).toFixed(2), total: (reward.totalCents / 100).toFixed(2), paymentMethod, rewards: await rewards.orderResult(reward, orderId) });
         }
 
         client = await pool.connect();
@@ -205,6 +210,7 @@ app.post('/orders', async (req, res) => {
         });
 
         const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+        const reward = await rewards.prepareOrder(req.body.rewardsToken, req.body.redeemReward, Math.round(total * 100), client);
         const idResult = await client.query(
             'SELECT (SELECT COALESCE(MAX(order_id), 0) + 1 FROM customer_order) AS order_id, ' +
             '(SELECT COALESCE(MAX(order_item_id), 0) + 1 FROM order_item) AS order_item_id'
@@ -213,7 +219,7 @@ app.post('/orders', async (req, res) => {
         let orderItemId = Number(idResult.rows[0].order_item_id);
         await client.query(
             'INSERT INTO customer_order(order_id, order_time, total_price, payment_method) VALUES ($1, CURRENT_TIMESTAMP, $2, $3)',
-            [orderId, total.toFixed(2), paymentMethod]
+            [orderId, (reward.totalCents / 100).toFixed(2), paymentMethod]
         );
 
         for (const item of items) {
@@ -243,14 +249,17 @@ app.post('/orders', async (req, res) => {
             }
         }
 
+        await rewards.completeOrder(reward, orderId, client);
         await client.query('COMMIT');
-        return res.json({ orderId, total: total.toFixed(2), paymentMethod });
+        client.release();
+        client = null;
+        return res.json({ orderId, subtotal: total.toFixed(2), discount: (reward.discountCents / 100).toFixed(2), total: (reward.totalCents / 100).toFixed(2), paymentMethod, rewards: await rewards.orderResult(reward, orderId) });
     } catch (error) {
         if (client) await client.query('ROLLBACK').catch(() => {});
         const clientError = /invalid|no inventory recipe|not enough inventory/i.test(error.message || '');
         console.error('Could not submit order:', error);
-        return res.status(clientError ? 400 : 500).json({
-            error: clientError ? error.message : 'Could not submit the order. Please try again.'
+        return res.status(error.status || (clientError ? 400 : 500)).json({
+            error: error.status || clientError ? error.message : 'Could not submit the order. Please try again.'
         });
     } finally {
         if (client) client.release();

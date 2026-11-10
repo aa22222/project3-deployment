@@ -41,6 +41,7 @@
             </div>
             <% } %>
             <div class="checkout">
+                <%- include('partials/rewards') %>
                 <label class="payment-label" for="payment-method">Payment method</label>
                 <select id="payment-method" name="paymentMethod" required>
                     <option value="" selected disabled>Choose a payment method</option>
@@ -64,6 +65,7 @@
                 <div><span>Payment</span><strong id="receipt-payment"></strong></div>
             </div>
             <div id="receipt-items" class="receipt-items"></div>
+            <p id="receipt-rewards" hidden></p>
             <div class="receipt-total"><span>Total</span><strong id="receipt-total"></strong></div>
             <p class="receipt-thanks">Thank you!</p>
             <div class="receipt-actions">
@@ -104,8 +106,10 @@
         </form>
     </dialog>
     <% } %>
+    <script src="/rewards.js"></script>
     <script>
         const cart = [];
+        let placingOrder = false;
         const money = value => '$' + value.toFixed(2);
         const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
@@ -214,7 +218,7 @@
                     <button class="remove" type="button" data-action="remove" data-index="${index}" aria-label="Remove ${escapeHtml(line.name)}">×</button>
                 </div>`).join('');
             const total = cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0);
-            document.getElementById('total').textContent = money(total);
+            window.rewardsWidget.updateSubtotal(Math.round(total * 100));
             const orderCount = document.getElementById('order-count');
             if (orderCount) {
                 const count = cart.reduce((sum, line) => sum + line.quantity, 0);
@@ -279,27 +283,41 @@
         }));
 
         function showNotice(message) { document.getElementById('notice').textContent = message; }
+        window.addEventListener('rewards-change', () => {
+            const subtotal = Math.round(cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0) * 100);
+            const discount = window.rewardsWidget.discountCents;
+            document.getElementById('total').textContent = money((subtotal - discount) / 100);
+        });
 
         document.getElementById('submit').addEventListener('click', async () => {
+            if (placingOrder) return;
             if (cart.length === 0) return showNotice('Tap an item to add it to the order.');
             const paymentMethod = document.getElementById('payment-method').value;
             if (!paymentMethod) return showNotice('Choose a payment method to continue.');
             const submitButton = document.getElementById('submit');
+            placingOrder = true;
+            document.querySelector('main').inert = true;
             submitButton.disabled = true;
             showNotice('Submitting order…');
             try {
                 const response = await fetch('/orders', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({paymentMethod, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))})
+                    body: JSON.stringify({paymentMethod, ...window.rewardsWidget.checkout, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))})
                 });
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.error || 'Could not submit the order.');
+                if (!response.ok) {
+                    if (response.status === 401) window.rewardsWidget.reset();
+                    throw new Error(result.error || 'Could not submit the order.');
+                }
                 if (document.getElementById('receipt')) {
                     const receiptLines = cart.map(line => ({...line, customizations: [...line.customizations]}));
                     document.getElementById('receipt-order-number').textContent = `#${result.orderId}`;
                     document.getElementById('receipt-date').textContent = new Intl.DateTimeFormat(undefined, {dateStyle: 'medium', timeStyle: 'short'}).format(new Date());
                     document.getElementById('receipt-payment').textContent = result.paymentMethod;
                     document.getElementById('receipt-total').textContent = money(Number(result.total));
+                    const rewardReceipt = document.getElementById('receipt-rewards');
+                    rewardReceipt.hidden = !result.rewards;
+                    rewardReceipt.textContent = result.rewards ? `Rewards discount: $${result.discount}. Earned ${result.rewards.pointsEarned} points. Used ${result.rewards.pointsRedeemed} points. Balance: ${result.rewards.points}.` : '';
                     document.getElementById('receipt-items').innerHTML = receiptLines.map(line => `
                         <div class="receipt-line">
                             <div><strong>${escapeHtml(line.name)}</strong><small>${line.quantity} × ${money(linePrice(line))}${line.customizations.length ? ` · ${escapeHtml(line.customizations.join(', '))}` : ''}</small></div>
@@ -308,12 +326,16 @@
                     document.getElementById('receipt').hidden = false;
                 }
                 cart.length = 0;
+                window.rewardsWidget.reset();
                 document.getElementById('payment-method').value = '';
                 renderCart();
-                showNotice(`Order #${result.orderId} submitted. Total: $${result.total}. Payment: ${result.paymentMethod}.`);
+                const rewardsNotice = result.rewards ? ` Earned ${result.rewards.pointsEarned} points. Balance: ${result.rewards.points}.${result.rewards.notification === 'queued' ? ' Reward text queued.' : result.rewards.notification === 'failed' ? ' Points saved; reward text could not be sent.' : result.rewards.notification === 'demo' ? ' Demo mode: no reward text sent.' : ''}` : '';
+                showNotice(`Order #${result.orderId} submitted. Total: $${result.total}. Payment: ${result.paymentMethod}.${rewardsNotice}`);
             } catch (error) {
                 showNotice(error.message);
             } finally {
+                placingOrder = false;
+                document.querySelector('main').inert = false;
                 submitButton.disabled = cart.length === 0;
             }
         });
