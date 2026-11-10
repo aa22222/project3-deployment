@@ -17,6 +17,10 @@ const mockMenu = [
 let nextMockOrderId = 1;
 const mockOrders = [];
 const mockInventory = [{ inventory_item_id: 1, item_name: 'Drink servings', quantity_in_stock: 100000 }];
+const mockEmployees = [
+    { employee_id: 1, first_name: 'Alex', last_name: 'Rivera', position: 'Barista', hourly_rate: '16.50', hours_worked: '32.00' },
+    { employee_id: 2, first_name: 'Jordan', last_name: 'Lee', position: 'Shift Lead', hourly_rate: '19.00', hours_worked: '36.50' }
+];
 const kitchenStatuses = new Map();
 const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled', 'Done']);
 
@@ -67,6 +71,20 @@ app.get('/manager', async (req, res) => {
     } catch (error) {
         console.error('Could not load inventory:', error);
         res.status(500).render('manager', { inventory: [], error: 'Could not load inventory. Please refresh to try again.', useMockDatabase });
+    }
+});
+app.get('/manager/payroll', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        // Only expose employee identifiers, names, roles, and compensation fields.
+        const employees = useMockDatabase ? mockEmployees : (await pool.query('SELECT * FROM employees')).rows;
+        const safeColumns = employees.length ? Object.keys(employees[0]).filter(column =>
+            /(^id$|employee.*id|first.*name|last.*name|full.*name|employee.*name|position|role|title|salary|wage|pay|hour|rate|commission|bonus)/i.test(column)
+        ) : [];
+        res.render('payroll', { employees, columns: safeColumns, error: '' });
+    } catch (error) {
+        console.error('Could not load payroll:', error);
+        res.status(500).render('payroll', { employees: [], columns: [], error: 'Could not load payroll information. Please refresh to try again.' });
     }
 });
 app.patch('/api/inventory/:id', async (req, res) => {

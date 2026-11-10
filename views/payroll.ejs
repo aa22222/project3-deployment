@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Boba Shop POS — Payroll</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header>
+        <div><h1>Boba Shop POS</h1><p class="subtitle">Manager · Payroll</p></div>
+        <a class="manager-back-link" href="/manager">Back to Manager</a>
+    </header>
+    <main class="manager-main">
+        <section class="panel manager-panel">
+            <h2>Employee Payroll</h2>
+            <p>Employee and compensation information from the employees table.</p>
+            <% if (error) { %><p class="payroll-message" role="alert"><%= error %></p>
+            <% } else if (!employees.length || !columns.length) { %><p class="payroll-message" role="status">No payroll information found.</p>
+            <% } else { %>
+            <div class="payroll-table-wrap">
+                <table class="payroll-table">
+                    <thead><tr><% columns.forEach(column => { %><th scope="col"><%= column.replace(/_/g, ' ') %></th><% }); %></tr></thead>
+                    <tbody><% employees.forEach(employee => { %><tr><% columns.forEach(column => { %><td><%= employee[column] == null ? '—' : employee[column] %></td><% }); %></tr><% }); %></tbody>
+                </table>
+            </div>
+            <% } %>
+        </section>
+    </main>
+</body>
+</html>
