@@ -132,8 +132,35 @@ app.patch('/api/inventory/:id', async (req, res) => {
     }
 });
 app.get('/cashier', (req, res) => renderOrderPage(req, res, 'cashier', 'Cashier'));
+app.get('/mobile', (req, res) => renderOrderPage(req, res, 'cashier', 'Mobile Ordering'));
 app.get('/kiosk', (req, res) => renderOrderPage(req, res, 'cashier', 'Customer Kiosk'));
 app.get('/kitchen', (req, res) => res.render('kitchen'));
+// Coalesce mobile checkout retries, including a response lost after the order saved.
+const checkoutRequests = new Map();
+app.post('/orders', async (req, res, next) => {
+    const key = req.get('Idempotency-Key');
+    if (!key) return next();
+    if (!/^[a-zA-Z0-9-]{16,80}$/.test(key)) return res.status(400).json({ error: 'Invalid checkout identifier.' });
+    const payload = JSON.stringify(req.body);
+    const existing = checkoutRequests.get(key);
+    if (existing) {
+        if (existing.payload !== payload) return res.status(409).json({ error: 'This checkout identifier belongs to a different order.' });
+        const result = await existing.result;
+        return res.status(result.status).json(result.body);
+    }
+    // Never evict a saved checkout during this server session: a late retry must stay safe.
+    if (checkoutRequests.size >= 10000) return res.status(503).json({ error: 'Mobile checkout is temporarily unavailable. Please order at the counter.' });
+    let finish;
+    const entry = { payload, result: new Promise(resolve => { finish = resolve; }) };
+    checkoutRequests.set(key, entry);
+    const sendJson = res.json.bind(res);
+    res.json = body => {
+        finish({ status: res.statusCode, body });
+        if (res.statusCode >= 400) checkoutRequests.delete(key);
+        return sendJson(body);
+    };
+    next();
+});
 app.post('/orders', async (req, res) => {
     const submittedItems = req.body && req.body.items;
     const paymentMethod = req.body && req.body.paymentMethod;

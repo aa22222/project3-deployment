@@ -6,14 +6,16 @@
     <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
 </head>
-<body class="order-page <%= pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
+<% const isMobile = pageTitle === 'Mobile Ordering'; const hasEditor = pageTitle === 'Cashier' || isMobile; %>
+<body class="order-page <%= isMobile ? 'mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
     <header>
-        <div><h1><%= pageTitle === 'Customer Kiosk' ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' ? 'Choose menu items and customize your order' : 'Select a menu item to customize it and add it to the order' %></p></div>
+        <div><h1><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Choose menu items and customize your order' : 'Select a menu item to customize it and add it to the order' %></p></div>
     </header>
+    <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
             <h2 id="menu-heading">Menu</h2>
-            <% if (pageTitle === 'Cashier') { %>
+            <% if (hasEditor) { %>
             <label class="menu-search" for="menu-search">Find a menu item
                 <input id="menu-search" type="search" placeholder="Search by name…" autocomplete="off" aria-controls="menu">
             </label>
@@ -22,6 +24,7 @@
             <div id="menu">
                 <% menuItems.forEach(item => { %>
                         <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>">
+                        <% if (isMobile) { %><span class="menu-image-placeholder" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M22 17h26l-4 39H26l-4-39Zm-4 0h34M39 17l4-12"/><circle cx="32" cy="45" r="2"/><circle cx="40" cy="46" r="2"/><circle cx="35" cy="51" r="2"/></svg><span>Image coming soon</span></span><% } %>
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
                     </button>
@@ -30,7 +33,7 @@
             </div>
         </section>
         <aside class="panel" aria-labelledby="order-heading">
-            <h2 id="order-heading" class="cart-title">Order <% if (pageTitle === 'Cashier') { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
+            <h2 tabindex="-1" id="order-heading" class="cart-title">Order <% if (hasEditor) { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
             <div id="cart" aria-live="polite"></div>
             <% if (pageTitle === 'Customer Kiosk') { %>
             <div class="customizations" aria-label="Order customizations" hidden>
@@ -42,6 +45,7 @@
             <% } %>
             <div class="checkout">
                 <%- include('partials/rewards') %>
+                <% if (isMobile) { %><p class="mobile-payment-note">Payment is collected at pickup. Choose how you plan to pay.</p><% } %>
                 <label class="payment-label" for="payment-method">Payment method</label>
                 <select id="payment-method" name="paymentMethod" required>
                     <option value="" selected disabled>Choose a payment method</option>
@@ -50,12 +54,12 @@
                     <option value="Mobile pay">Mobile pay</option>
                 </select>
                 <div class="total"><span>TOTAL</span><span id="total">$0.00</span></div>
-                <button id="submit" type="button"><%= pageTitle === 'Customer Kiosk' ? 'Place order' : 'Submit order' %></button>
+                <button id="submit" type="button"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Place order' : 'Submit order' %></button>
                 <p id="notice" role="status"></p>
             </div>
         </aside>
     </main>
-    <section id="receipt" hidden aria-labelledby="receipt-title">
+    <dialog id="receipt" aria-labelledby="receipt-title">
         <article class="receipt-paper">
             <h2 id="receipt-title">Boba Shop</h2>
             <p class="receipt-subtitle">Customer receipt</p>
@@ -73,8 +77,8 @@
                 <button id="new-order" type="button">New order</button>
             </div>
         </article>
-    </section>
-    <% if (pageTitle === 'Cashier') { %>
+    </dialog>
+    <% if (hasEditor) { %>
     <dialog id="drink-editor" aria-labelledby="editor-title" aria-describedby="editor-hint">
         <form id="drink-form">
             <h2 id="editor-title">Customize item</h2>
@@ -110,6 +114,7 @@
     <script>
         const cart = [];
         let placingOrder = false;
+        let checkoutAttempt;
         const money = value => '$' + value.toFixed(2);
         const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
@@ -209,9 +214,9 @@
                         <div class="line-meta">${line.quantity} × ${money(linePrice(line))} &nbsp; ${money(linePrice(line) * line.quantity)}</div>
                         ${line.customizations.length ? `<div class="line-custom">${escapeHtml(line.customizations.join(', '))}</div>` : ''}
                         <div class="line-actions">
-                            <button class="qty-btn" type="button" data-action="decrease" data-index="${index}" aria-label="Remove one">−</button>
+                            <button class="qty-btn" type="button" data-action="decrease" data-index="${index}" aria-label="Remove one ${escapeHtml(line.name)}">−</button>
                             <span>${line.quantity}</span>
-                            <button class="qty-btn" type="button" data-action="increase" data-index="${index}" aria-label="Add one">+</button>
+                            <button class="qty-btn" type="button" data-action="increase" data-index="${index}" aria-label="Add one ${escapeHtml(line.name)}">+</button>
                             ${editor ? `<button class="edit-drink" type="button" data-action="edit" data-index="${index}" aria-label="Edit ${escapeHtml(line.name)}">Edit</button>` : ''}
                         </div>
                     </div>
@@ -224,6 +229,8 @@
                 const count = cart.reduce((sum, line) => sum + line.quantity, 0);
                 orderCount.textContent = `${count} item${count === 1 ? '' : 's'}`;
             }
+            const mobileCount = document.getElementById('mobile-cart-count');
+            if (mobileCount) mobileCount.textContent = cart.reduce((sum, line) => sum + line.quantity, 0);
             document.getElementById('submit').disabled = cart.length === 0;
             const customizationPanel = document.querySelector('.customizations');
             if (customizationPanel) customizationPanel.hidden = !cart.some(line => line.customizationOptions.length > 0);
@@ -246,7 +253,10 @@
                 cart[index].quantity--;
                 if (cart[index].quantity === 0) cart.splice(index, 1);
             }
+            const action = button.dataset.action;
             renderCart();
+            const nextIndex = Math.min(index, cart.length - 1);
+            (document.querySelector(`[data-action="${action}"][data-index="${nextIndex}"]`) || document.querySelector('.drink'))?.focus();
         });
 
         document.querySelectorAll('[data-customization]').forEach(button => button.addEventListener('click', () => {
@@ -300,12 +310,14 @@
             submitButton.disabled = true;
             showNotice('Submitting order…');
             try {
+                const body = JSON.stringify({paymentMethod, ...window.rewardsWidget.checkout, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))});
+                if (!checkoutAttempt) checkoutAttempt = { body, key: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}` };
                 const response = await fetch('/orders', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({paymentMethod, ...window.rewardsWidget.checkout, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))})
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'Idempotency-Key': checkoutAttempt.key}, body: checkoutAttempt.body
                 });
                 const result = await response.json();
                 if (!response.ok) {
+                    checkoutAttempt = null;
                     if (response.status === 401) window.rewardsWidget.reset();
                     throw new Error(result.error || 'Could not submit the order.');
                 }
@@ -323,8 +335,9 @@
                             <div><strong>${escapeHtml(line.name)}</strong><small>${line.quantity} × ${money(linePrice(line))}${line.customizations.length ? ` · ${escapeHtml(line.customizations.join(', '))}` : ''}</small></div>
                             <span>${money(linePrice(line) * line.quantity)}</span>
                         </div>`).join('');
-                    document.getElementById('receipt').hidden = false;
+                    document.getElementById('receipt').showModal();
                 }
+                checkoutAttempt = null;
                 cart.length = 0;
                 window.rewardsWidget.reset();
                 document.getElementById('payment-method').value = '';
@@ -332,17 +345,19 @@
                 const rewardsNotice = result.rewards ? ` Earned ${result.rewards.pointsEarned} points. Balance: ${result.rewards.points}.${result.rewards.notification === 'queued' ? ' Reward text queued.' : result.rewards.notification === 'failed' ? ' Points saved; reward text could not be sent.' : result.rewards.notification === 'demo' ? ' Demo mode: no reward text sent.' : ''}` : '';
                 showNotice(`Order #${result.orderId} submitted. Total: $${result.total}. Payment: ${result.paymentMethod}.${rewardsNotice}`);
             } catch (error) {
-                showNotice(error.message);
+                showNotice(checkoutAttempt ? 'The order status is uncertain. Tap Retry order to check the same order before making changes.' : error.message);
             } finally {
                 placingOrder = false;
                 document.querySelector('main').inert = false;
+                document.querySelectorAll('main button:not(#submit), main input, main select, main details').forEach(control => control.inert = Boolean(checkoutAttempt));
+                submitButton.textContent = checkoutAttempt ? 'Retry order' : <%- JSON.stringify(pageTitle === 'Cashier' ? 'Submit order' : 'Place order') %>;
                 submitButton.disabled = cart.length === 0;
             }
         });
 
         document.getElementById('print-receipt')?.addEventListener('click', () => window.print());
         document.getElementById('new-order')?.addEventListener('click', () => {
-            document.getElementById('receipt').hidden = true;
+            document.getElementById('receipt').close();
             document.querySelector('.drink')?.focus();
         });
 

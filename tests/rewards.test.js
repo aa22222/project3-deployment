@@ -101,3 +101,22 @@ test('invalid orders do not earn points, small orders cannot redeem, and concurr
     assert.equal((await order(member.token, 1)).body.rewards.points, 12);
     assert.equal((await post('/orders', { paymentMethod: 'Cash', items: [{ menuItemId: 1, quantity: 1 }] })).status, 200);
 });
+
+
+test('mobile checkout retries and concurrent requests create one order', async () => {
+    const mobile = await fetch(base + '/mobile');
+    assert.equal(mobile.status, 200);
+    const html = await mobile.text();
+    assert.match(html, /mobile-page/);
+    assert.match(html, /Image coming soon/);
+    const key = require('node:crypto').randomUUID();
+    const body = { paymentMethod: 'Card', items: [{ menuItemId: 1, quantity: 2, customizations: ['Boba'] }] };
+    const checkout = async payload => {
+        const response = await fetch(base + '/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(payload) });
+        return { status: response.status, body: await response.json() };
+    };
+    const results = await Promise.all([checkout(body), checkout(body), checkout(body)]);
+    results.forEach(result => { assert.equal(result.status, 200); assert.equal(result.body.total, '11.96'); assert.equal(result.body.orderId, results[0].body.orderId); });
+    assert.deepEqual(await checkout(body), results[0]);
+    assert.equal((await checkout({ ...body, paymentMethod: 'Cash' })).status, 409);
+});

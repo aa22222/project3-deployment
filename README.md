@@ -58,6 +58,14 @@ After a cashier or kiosk order is submitted, use **Print receipt** to open the
 browser's print dialog. The receipt includes the order number, time, items,
 customizations, payment method, and total.
 
+## Mobile ordering
+
+Open `/mobile` (also linked from the portal) for a phone-friendly menu with image
+placeholders, search, per-item customization, rewards, and checkout. It uses the
+same menu and order backend as the cashier and kiosk. Checkout retry identifiers
+prevent duplicate submissions during a server session; they reset on restart. Replace the
+`.menu-image-placeholder` markup in `views/cashier.ejs` when menu photos are ready.
+
 ## `.env` File Format
 
 Create a file named `.env` in the project root. Replace the placeholder values

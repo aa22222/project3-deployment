@@ -311,8 +311,8 @@ aside {
     border-radius: 8px;
 }
 
-#receipt[hidden] { display: none; }
-#receipt:not([hidden]) { position: fixed; z-index: 20; inset: 0; overflow-y: auto; padding: 28px 16px; background: rgb(25 35 29 / 45%); }
+#receipt:not([open]) { display: none; }
+#receipt[open] { position: fixed; z-index: 20; inset: 0; overflow-y: auto; padding: 28px 16px; background: rgb(25 35 29 / 45%); }
 .receipt-paper { width: min(440px, 100%); padding: 28px; margin: 0 auto; color: #202820; background: #fff; box-shadow: 0 12px 36px rgb(0 0 0 / 18%); }
 .receipt-paper h2 { margin: 0; text-align: center; }
 .receipt-subtitle, .receipt-thanks { margin: 5px 0 20px; color: #5c675e; text-align: center; }
@@ -330,8 +330,8 @@ aside {
 @media print {
     @page { margin: 10mm; }
     body.order-page * { visibility: hidden !important; }
-    body.order-page #receipt:not([hidden]), body.order-page #receipt:not([hidden]) * { visibility: visible !important; }
-    body.order-page #receipt:not([hidden]) { position: absolute; inset: 0 auto auto 0; display: block; width: 100%; padding: 0; overflow: visible; background: #fff; }
+    body.order-page #receipt[open], body.order-page #receipt[open] * { visibility: visible !important; }
+    body.order-page #receipt[open] { position: absolute; inset: 0 auto auto 0; display: block; width: 100%; padding: 0; overflow: visible; background: #fff; }
     body.order-page .receipt-paper { width: 100%; max-width: none; padding: 0; box-shadow: none; }
     body.order-page .receipt-actions { display: none; }
 }
@@ -564,3 +564,44 @@ aside {
     .inventory-status { grid-column: 1; }
     .manager-panel #inventory-list .inventory-row > button { grid-column: 2; grid-row: 2; }
 }
+
+/* Mobile ordering shares the menu, checkout, and brand palette. */
+.mobile-page main { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 720px; padding: 22px 16px 40px; min-height: auto; }
+.mobile-page header { padding: 22px 20px; }
+.mobile-order-nav { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); background: var(--surface); border-bottom: 1px solid var(--border); }
+.mobile-order-nav a { display: flex; gap: 5px; align-items: center; min-height: 44px; padding: 10px 14px; color: var(--green-dark); font-weight: 700; text-decoration: none; border-radius: 4px; }
+.mobile-order-nav a:last-child { background: var(--green); color: var(--surface); }
+.mobile-page #menu-heading, .mobile-page #order-heading { scroll-margin-top: 88px; }
+.mobile-page .menu-panel { padding: 0; }
+.mobile-page .menu-search { max-width: none; }
+.mobile-page #menu { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mobile-page .drink { min-width: 0; padding: 12px; justify-content: flex-start; overflow-wrap: anywhere; }
+.mobile-page .drink-name { margin: 12px 0 8px; }
+.mobile-page .price { margin-top: auto; padding-right: 22px; }
+.menu-image-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; aspect-ratio: 4 / 3; color: var(--muted); background: #eee5d9; border: 1px dashed #b6a99a; border-radius: 3px; font-size: .7rem; text-align: center; }
+.menu-image-placeholder svg { width: 52px; height: 52px; stroke: var(--green); stroke-width: 2; }
+.mobile-page aside { min-height: 0; padding: 18px; }
+.mobile-page .cart-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.mobile-page #cart { max-height: none; min-height: 100px; overflow: visible; }
+.mobile-page .empty { padding: 22px 8px; }
+.mobile-page .cart-line { grid-template-columns: minmax(0, 1fr) auto; overflow-wrap: anywhere; }
+.mobile-page .line-actions { flex-wrap: wrap; }
+.mobile-page :is(.qty-btn, .remove, .edit-drink) { min-width: 44px; min-height: 44px; }
+.mobile-page :is(input:not([type=checkbox]):not([type=radio]), select) { min-width: 0; font-size: 16px; }
+.mobile-page :is(button, summary, select) { min-height: 44px; }
+.mobile-page #drink-editor { width: calc(100% - 24px); max-width: 480px; max-height: calc(100dvh - 24px); padding: 20px; overflow-y: auto; overscroll-behavior: contain; }
+.mobile-page #editor-title { overflow-wrap: anywhere; }
+.mobile-page .drink-option { min-height: 44px; }
+.mobile-page .receipt-paper { width: 100%; max-width: 420px; }
+.mobile-page .receipt-line { grid-template-columns: minmax(0, 1fr) auto; overflow-wrap: anywhere; }
+.mobile-page :is(.receipt-actions, .editor-actions) { flex-wrap: wrap; }
+.mobile-page #receipt { padding: 12px; overflow-y: auto; }
+.mobile-page .checkout { padding-bottom: env(safe-area-inset-bottom); }
+.mobile-page select:focus-visible { outline: 3px solid #b35426; outline-offset: 3px; }
+@media (max-width: 360px) { .mobile-page main { padding-inline: 12px; } .mobile-order-nav { gap: 4px; padding-inline: 8px; } .mobile-order-nav a { padding-inline: 10px; font-size: .9rem; } }
+
+#receipt { width: 100%; max-width: none; max-height: 100dvh; height: 100%; margin: 0; border: 0; color: var(--ink); }
+#receipt::backdrop { background: rgb(25 35 29 / 45%); }
+.mobile-page .receipt-line { display: grid; }
+.mobile-page .receipt-details > div { flex-wrap: wrap; gap: 4px 12px; overflow-wrap: anywhere; }
+.mobile-payment-note { color: var(--muted); font-size: .9rem; line-height: 1.5; }
