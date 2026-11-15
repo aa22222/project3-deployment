@@ -24,8 +24,8 @@ npm install
 
 Create a `.env` file in the project root using the format below and make sure
 the PostgreSQL database is running. On startup, the app creates any missing
-POS tables from `db/schema.sql` and adds a small sample menu only when the menu
-is empty. Existing menu and inventory rows are preserved.
+POS tables from `db/schema.sql`. Menu, inventory, orders, and employees always
+come from PostgreSQL. Startup preserves existing data and never seeds products.
 
 Then start the application:
 
@@ -34,22 +34,6 @@ npm start
 ```
 
 Open the application at [http://localhost:3000](http://localhost:3000).
-
-### 3. Run mock mode for general testing
-
-Mock mode does not connect to PostgreSQL. It loads sample menu items and
-processes orders in memory, making it useful for testing the interface without
-database credentials:
-
-```powershell
-npm run start:mock
-```
-
-Open the application at [http://localhost:3000](http://localhost:3000).
-
-Orders submitted in mock mode are shared between the cashier and kitchen while
-the app is running. Mock orders and kitchen status changes are cleared when the
-app stops. Database mode stores orders, items, and kitchen status in PostgreSQL.
 
 At checkout, choose Cash, Credit or debit card, or Mobile pay. The selected
 method is saved with the order. Card and mobile payments are recorded as the
@@ -98,15 +82,6 @@ account. Separate accounts are not automatically merged.
   Codes and tokens are kept in server memory, so restarting requires sign-in
   again. PostgreSQL retains accounts, balances, and order history.
 
-### Local demo without provider accounts
-
-Run `npm run start:mock`. **Send code** displays a clearly labeled demo code;
-no text or email is sent, even if provider credentials exist. Verify that code,
-place an order, and sign in again to see the balance. For a quick test, buy 11
-Classic Milk Teas: $54.89 earns 54 points. A subsequent two-tea order can use
-50 points, reducing $9.98 to $4.98 and leaving 8 points after earning 4 more.
-All mock data resets when the server restarts.
-
 ### Real messages and deployment
 
 Use the names in `.env.example`; put real values in the git-ignored `.env`
@@ -146,9 +121,7 @@ requested only after the transaction commits.
 
 ### Verification
 
-`npm test` runs mock integration checks without sending messages. To also test
-the PostgreSQL transaction behavior with your configured database, run
-`REWARDS_DB_TEST=true npm test`. That check uses connection-local temporary
-tables and rolls everything back; it does not modify shop records. Delivery
-is stubbed during the database check. No new runtime dependencies are needed.
-
+`npm test` runs provider request checks without sending messages. Set
+`REWARDS_DB_TEST=true` to include PostgreSQL transaction and real menu checks
+using your configured database. Transaction tests use connection-local temporary
+tables and roll back; menu checks only read shop data. No shop records are changed.

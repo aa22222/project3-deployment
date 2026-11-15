@@ -550,7 +550,6 @@ aside {
 .inventory-stock-control input { min-width: 0; }
 .inventory-stock-control > span { color: var(--muted); font-size: .85rem; }
 .inventory-status { color: var(--muted); font-size: .88rem; }
-.manager-demo-note { margin: 0 0 12px !important; }
 .manager-panel #inventory-list .inventory-row { grid-template-columns: minmax(0, 1fr) 180px 130px 80px; gap: 12px; }
 .manager-panel .inventory-feedback { grid-column: 1 / -1; min-height: 0; }
 .manager-panel .inventory-feedback:empty { display: none; }

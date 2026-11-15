@@ -47,7 +47,7 @@ window.rewardsWidget = (() => {
             const result = await request('code', { contact: element('rewards-contact').value, token, smsOptIn: element('rewards-opt-in').checked });
             challengeId = result.challengeId;
             contactForm.hidden = true; codeForm.hidden = false; codeForm.reset();
-            message(result.demoCode ? `Demo mode — no message sent. Code: ${result.demoCode}` : 'Code sent. Check your texts or email; it expires in 5 minutes.');
+            message('Code sent. Check your texts or email; it expires in 5 minutes.');
             element('rewards-code').focus();
         });
     });

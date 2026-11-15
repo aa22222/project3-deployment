@@ -32,7 +32,7 @@ test('PostgreSQL rewards and order ledger roll back together; notification failu
             return response.json();
         }
         const challenge = await post('/code', { contact: '+12025550199', smsOptIn: true });
-        assert.equal(challenge.demoCode, undefined);
+        assert.deepEqual(Object.keys(challenge), ['challengeId']);
         const { token } = await post('/verify', { challengeId: challenge.challengeId, code });
         const purchase = await rewards.prepareOrder(token, false, 5489, client);
         await client.query('INSERT INTO customer_order VALUES (1)');

@@ -8,13 +8,6 @@ const { createRewards } = require('./lib/rewards');
 // Create express app
 const app = express();
 const port = Number(process.env.PORT) || 3000;
-const useMockDatabase = process.argv.includes('--mock') || process.env.USE_MOCK_DB === 'true';
-const mockMenu = [
-    { menu_item_id: 1, item_name: 'Classic Milk Tea', current_price: 4.99 },
-    { menu_item_id: 2, item_name: 'Taro Milk Tea', current_price: 5.49 },
-    { menu_item_id: 3, item_name: 'Mango Green Tea', current_price: 4.79 },
-    { menu_item_id: 4, item_name: 'Strawberry Smoothie', current_price: 5.99 }
-];
 const drinkCustomizations = ['Boba', 'Less ice', 'More ice', 'Less sweet'];
 function getAvailableCustomizations(itemName) {
     const name = String(itemName).toLowerCase();
@@ -22,18 +15,10 @@ function getAvailableCustomizations(itemName) {
     const isDrink = /\b(tea|smoothie|coffee|latte|espresso|juice|lemonade|soda|boba|frappe|milkshake|drink)\b/.test(name);
     return isDrink && !isFood ? drinkCustomizations : [];
 }
-let nextMockOrderId = 1;
-const mockOrders = [];
-const mockInventory = [{ inventory_item_id: 1, item_name: 'Drink servings', item_type: 'ingredient', quantity_in_stock: 100000, unit: 'servings', reorder_level: 20 }];
-const mockEmployees = [
-    { employee_id: 1, first_name: 'Alex', last_name: 'Rivera', position: 'Barista', hourly_rate: '16.50', hours_worked: '32.00' },
-    { employee_id: 2, first_name: 'Jordan', last_name: 'Lee', position: 'Shift Lead', hourly_rate: '19.00', hours_worked: '36.50' }
-];
-const kitchenStatuses = new Map();
 const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled', 'Done']);
 
 // Create pool
-const pool = useMockDatabase ? null : new Pool({
+const pool = new Pool({
     user: process.env.PSQL_USER,
     host: process.env.PSQL_HOST,
     database: process.env.PSQL_DATABASE,
@@ -52,17 +37,11 @@ process.on('SIGINT', function() {
 app.set("view engine", "ejs");
 app.use(express.static('public'));
 app.use(express.json());
-const rewards = createRewards({ pool, mock: useMockDatabase });
+const rewards = createRewards({ pool });
 app.use('/api/rewards', rewards.router);
 
 async function renderOrderPage(req, res, view, pageTitle) {
     try {
-        if (useMockDatabase) {
-            return res.render(view, { menuItems: mockMenu.map(item => ({
-                ...item,
-                customizations: getAvailableCustomizations(item.item_name)
-            })), pageTitle });
-        }
         const result = await pool.query(
             'SELECT menu_item_id, item_name, current_price FROM menu_item ORDER BY item_name'
         );
@@ -80,19 +59,19 @@ app.get('/', (req, res) => res.render('portal'));
 app.get('/manager', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
-        const inventory = useMockDatabase ? mockInventory : (await pool.query(
+        const inventory = (await pool.query(
             'SELECT inventory_item_id, item_name, item_type, quantity_in_stock, unit, reorder_level FROM inventory_item ORDER BY item_name'
         )).rows;
-        res.render('manager', { inventory, error: '', useMockDatabase });
+        res.render('manager', { inventory, error: '' });
     } catch (error) {
         console.error('Could not load inventory:', error);
-        res.status(500).render('manager', { inventory: [], error: 'Could not load inventory. Please refresh to try again.', useMockDatabase });
+        res.status(500).render('manager', { inventory: [], error: 'Could not load inventory. Please refresh to try again.' });
     }
 });
 app.get('/manager/payroll', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
-        const employees = useMockDatabase ? mockEmployees : (await pool.query(
+        const employees = (await pool.query(
             'SELECT employee_id, first_name, last_name, hourly_wage AS hourly_rate, hours_worked, ' +
             'ROUND(hourly_wage * hours_worked, 2) AS gross_pay ' +
             'FROM employee ORDER BY last_name, first_name, employee_id'
@@ -114,16 +93,10 @@ app.patch('/api/inventory/:id', async (req, res) => {
         return res.status(400).json({ error: 'Enter a valid quantity from 0 to 9999999999.99 with at most two decimal places.' });
     }
     try {
-        let item;
-        if (useMockDatabase) {
-            item = mockInventory.find(item => item.inventory_item_id === id);
-            if (item) item.quantity_in_stock = quantity;
-        } else {
-            item = (await pool.query(
-                'UPDATE inventory_item SET quantity_in_stock = $1 WHERE inventory_item_id = $2 RETURNING inventory_item_id, quantity_in_stock, reorder_level',
-                [quantity, id]
-            )).rows[0];
-        }
+        const item = (await pool.query(
+            'UPDATE inventory_item SET quantity_in_stock = $1 WHERE inventory_item_id = $2 RETURNING inventory_item_id, quantity_in_stock, reorder_level',
+            [quantity, id]
+        )).rows[0];
         if (!item) return res.status(404).json({ error: 'Inventory item not found. Refresh the page.' });
         res.json(item);
     } catch (error) {
@@ -174,42 +147,6 @@ app.post('/orders', async (req, res) => {
 
     let client;
     try {
-        if (useMockDatabase) {
-            const menuById = new Map(mockMenu.map(item => [item.menu_item_id, item]));
-            const items = submittedItems.map(item => {
-                const menuItemId = Number(item.menuItemId);
-                const quantity = Number(item.quantity);
-                const customizations = Array.isArray(item.customizations) ? item.customizations : [];
-                const menuItem = menuById.get(menuItemId);
-                const allowedCustomizations = new Set(getAvailableCustomizations(menuItem?.item_name));
-                if (!menuItem || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 1000 ||
-                    customizations.some(value => !allowedCustomizations.has(value)) ||
-                    new Set(customizations).size !== customizations.length ||
-                    (customizations.includes('Less ice') && customizations.includes('More ice'))) {
-                    throw new Error('One or more order items are invalid. Refresh the page and try again.');
-                }
-                const unitPrice = Number(menuItem.current_price) + (customizations.includes('Boba') ? 0.99 : 0);
-                return { quantity, customizations, unitPrice };
-            });
-            const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-            const reward = await rewards.prepareOrder(req.body.rewardsToken, req.body.redeemReward, Math.round(total * 100));
-            const orderId = nextMockOrderId++;
-            await rewards.completeOrder(reward, orderId);
-            mockOrders.push({
-                orderId,
-                orderTime: new Date().toISOString(),
-                total: (reward.totalCents / 100).toFixed(2),
-                paymentMethod,
-                items: items.map((item, index) => ({
-                    name: mockMenu.find(menuItem => menuItem.menu_item_id === Number(submittedItems[index].menuItemId)).item_name,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice.toFixed(2),
-                    customizations: item.customizations.join(', ')
-                }))
-            });
-            return res.json({ orderId, subtotal: total.toFixed(2), discount: (reward.discountCents / 100).toFixed(2), total: (reward.totalCents / 100).toFixed(2), paymentMethod, rewards: await rewards.orderResult(reward, orderId) });
-        }
-
         client = await pool.connect();
         await client.query('BEGIN');
         await client.query('LOCK TABLE customer_order, order_item IN SHARE ROW EXCLUSIVE MODE');
@@ -295,16 +232,6 @@ app.post('/orders', async (req, res) => {
 
 app.get('/api/kitchen/orders', async (req, res) => {
     try {
-        if (useMockDatabase) {
-            const orders = mockOrders
-                .filter(order => !['Cancelled', 'Done'].includes(kitchenStatuses.get(order.orderId)))
-                .map(order => ({
-                ...order,
-                status: kitchenStatuses.get(order.orderId) || 'New'
-                }));
-            return res.json(orders.sort((a, b) => new Date(a.orderTime) - new Date(b.orderTime)));
-        }
-
         const result = await pool.query(
             'WITH kitchen_queue AS (' +
             'SELECT co.order_id, co.order_time, co.total_price, COALESCE(kos.status, \'New\') AS status ' +
@@ -354,10 +281,6 @@ app.patch('/api/kitchen/orders/:orderId/status', async (req, res) => {
         return res.status(400).json({ error: 'Choose a valid order status.' });
     }
     try {
-        if (useMockDatabase) {
-            kitchenStatuses.set(orderId, status);
-            return res.json({ orderId, status });
-        }
         const existingOrder = await pool.query('SELECT 1 FROM customer_order WHERE order_id = $1', [orderId]);
         if (existingOrder.rowCount === 0) return res.status(404).json({ error: 'Order not found.' });
         await pool.query(
@@ -373,16 +296,18 @@ app.patch('/api/kitchen/orders/:orderId/status', async (req, res) => {
 });
 
 async function startServer() {
-    if (!useMockDatabase) {
-        const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
-        await pool.query(schema);
-    }
+    const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
+    await pool.query(schema);
     app.listen(port, () => {
-        console.log(`Example app listening at http://localhost:${port}${useMockDatabase ? ' (mock database mode)' : ''}`);
+        console.log(`Example app listening at http://localhost:${port}`);
     });
 }
 
-startServer().catch(error => {
-    console.error('Could not initialize the database:', error);
-    process.exit(1);
-});
+if (require.main === module) {
+    startServer().catch(error => {
+        console.error('Could not initialize the database:', error);
+        process.exit(1);
+    });
+}
+
+module.exports = { app, pool };

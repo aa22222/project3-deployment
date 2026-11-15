@@ -27,7 +27,6 @@
             <p class="inventory-summary"><strong><%= inventory.length %></strong> items tracked <span aria-hidden="true">&middot;</span> <strong id="low-stock-count"><%= inventory.filter(item => Number(item.quantity_in_stock) <= Number(item.reorder_level || 0)).length %></strong> at reorder point</p>
         </section>
         <section class="panel manager-panel">
-            <% if (useMockDatabase) { %><p class="manager-demo-note">Demo inventory - changes reset when the server restarts.</p><% } %>
             <form action="/manager" class="inventory-toolbar">
                 <label class="menu-search" for="inventory-search">Find an inventory item
                     <input id="inventory-search" type="search" placeholder="Search by name..." autocomplete="off" aria-controls="inventory-list">

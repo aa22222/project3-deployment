@@ -342,7 +342,7 @@
                 window.rewardsWidget.reset();
                 document.getElementById('payment-method').value = '';
                 renderCart();
-                const rewardsNotice = result.rewards ? ` Earned ${result.rewards.pointsEarned} points. Balance: ${result.rewards.points}.${result.rewards.notification === 'queued' ? ' Reward text queued.' : result.rewards.notification === 'failed' ? ' Points saved; reward text could not be sent.' : result.rewards.notification === 'demo' ? ' Demo mode: no reward text sent.' : ''}` : '';
+                const rewardsNotice = result.rewards ? ` Earned ${result.rewards.pointsEarned} points. Balance: ${result.rewards.points}.${result.rewards.notification === 'queued' ? ' Reward text queued.' : result.rewards.notification === 'failed' ? ' Points saved; reward text could not be sent.' : ''}` : '';
                 showNotice(`Order #${result.orderId} submitted. Total: $${result.total}. Payment: ${result.paymentMethod}.${rewardsNotice}`);
             } catch (error) {
                 showNotice(checkoutAttempt ? 'The order status is uncertain. Tap Retry order to check the same order before making changes.' : error.message);

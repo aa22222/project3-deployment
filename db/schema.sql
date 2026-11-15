@@ -1,5 +1,5 @@
 -- Core POS tables. This file is safe to run on every application startup.
--- Existing rows are left in place; the sample menu rows are added only when absent.
+-- Existing shop data is preserved. Startup never inserts menu or inventory data.
 
 CREATE TABLE IF NOT EXISTS menu_item (
     menu_item_id INTEGER PRIMARY KEY,
@@ -72,8 +72,7 @@ CREATE TABLE IF NOT EXISTS kitchen_order_status (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Employee information used by the manager payroll page. No sample employees
--- are inserted so payroll reflects only staff entered for this shop.
+-- Employee information used by the manager payroll page.
 CREATE TABLE IF NOT EXISTS employee (
     employee_id INTEGER PRIMARY KEY,
     first_name VARCHAR NOT NULL,
@@ -87,27 +86,3 @@ ALTER TABLE kitchen_order_status
 ALTER TABLE kitchen_order_status
     ADD CONSTRAINT kitchen_order_status_status_check
     CHECK (status IN ('New', 'Preparing', 'Ready', 'Cancelled', 'Done'));
-
-INSERT INTO menu_item(menu_item_id, item_name, current_price)
-SELECT sample.menu_item_id, sample.item_name, sample.current_price
-FROM (VALUES
-    (1, 'Classic Milk Tea', 4.99),
-    (2, 'Taro Milk Tea', 5.49),
-    (3, 'Mango Green Tea', 4.79),
-    (4, 'Strawberry Smoothie', 5.99)
-) AS sample(menu_item_id, item_name, current_price)
-WHERE NOT EXISTS (SELECT 1 FROM menu_item)
-ON CONFLICT (menu_item_id) DO NOTHING;
-
-INSERT INTO inventory_item(inventory_item_id, item_name, item_type, quantity_in_stock, unit, reorder_level)
-SELECT 1, 'Drink servings', 'ingredient', 100000, 'servings', 0
-WHERE NOT EXISTS (SELECT 1 FROM inventory_item)
-ON CONFLICT (inventory_item_id) DO NOTHING;
-
-INSERT INTO menu_item_ingredient(menu_item_id, inventory_item_id, quantity_required)
-SELECT sample.menu_item_id, 1, 1
-FROM (VALUES (1), (2), (3), (4)) AS sample(menu_item_id)
-WHERE NOT EXISTS (SELECT 1 FROM menu_item_ingredient)
-  AND EXISTS (SELECT 1 FROM menu_item WHERE menu_item_id = sample.menu_item_id)
-  AND EXISTS (SELECT 1 FROM inventory_item WHERE inventory_item_id = 1)
-ON CONFLICT (menu_item_id, inventory_item_id) DO NOTHING;
