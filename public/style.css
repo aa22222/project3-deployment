@@ -604,3 +604,7 @@ aside {
 .mobile-page .receipt-line { display: grid; }
 .mobile-page .receipt-details > div { flex-wrap: wrap; gap: 4px 12px; overflow-wrap: anywhere; }
 .mobile-payment-note { color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+.kiosk-page .drink { min-width: 0; padding: 14px; justify-content: flex-start; overflow-wrap: anywhere; }
+.kiosk-page .drink-name { margin: 12px 0 8px; }
+.kiosk-page .price { margin-top: auto; padding-right: 22px; }
