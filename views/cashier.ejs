@@ -6,10 +6,10 @@
     <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
 </head>
-<% const isMobile = pageTitle === 'Mobile Ordering'; const hasEditor = pageTitle === 'Cashier' || isMobile; %>
+<% const isMobile = pageTitle === 'Mobile Ordering'; const hasEditor = pageTitle === 'Customer Kiosk' || isMobile; %>
 <body class="order-page <%= isMobile ? 'mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : '' %>">
     <header>
-        <div><h1><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Choose menu items and customize your order' : 'Select a menu item to customize it and add it to the order' %></p></div>
+        <div><h1><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Choose menu items and customize your order' : 'Select menu items to add them, then customize the order' %></p></div>
     </header>
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
     <main>
@@ -35,7 +35,7 @@
         <aside class="panel" aria-labelledby="order-heading">
             <h2 tabindex="-1" id="order-heading" class="cart-title">Order <% if (hasEditor) { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
             <div id="cart" aria-live="polite"></div>
-            <% if (pageTitle === 'Customer Kiosk') { %>
+            <% if (pageTitle === 'Cashier') { %>
             <div class="customizations" aria-label="Order customizations" hidden>
                 <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
                 <button type="button" data-customization="Less ice">Less ice</button>
