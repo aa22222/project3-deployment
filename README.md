@@ -42,6 +42,13 @@ After a cashier or kiosk order is submitted, use **Print receipt** to open the
 browser's print dialog. The receipt includes the order number, time, items,
 customizations, payment method, and total.
 
+## Manager menu editing
+
+Managers can open **Menu** in the manager portal (`/manager/menu`) to search
+existing menu items and edit names and prices. Save each item separately; Reset
+restores its last saved values. Changes are stored in PostgreSQL and appear on
+cashier, kiosk, and mobile menus when those pages are next loaded.
+
 ## Mobile ordering
 
 Open `/mobile` (also linked from the portal) for a phone-friendly menu with image
