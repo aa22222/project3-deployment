@@ -16,6 +16,26 @@ function getAvailableCustomizations(itemName) {
     const isDrink = /\b(tea|smoothie|coffee|latte|espresso|juice|lemonade|soda|boba|frappe|milkshake|drink)\b/.test(name);
     return isDrink && !isFood ? drinkCustomizations : [];
 }
+const kioskMenuCategories = [
+    { name: 'Milk Teas / Classic Milk Teas', description: 'Classic teas, creamy favorites, and house milk tea staples.' },
+    { name: 'Fresh Milk / Latte Series', description: 'Fresh milk drinks made with tea, matcha, or other flavors.' },
+    { name: 'Fruit Teas / Flavored Teas', description: 'Bright, refreshing teas with fruit flavors.' },
+    { name: 'Slushes / Smoothies / Ice-Blended', description: 'Cold, blended drinks with a smooth, icy texture.' },
+    { name: 'Signature / Specialty Drinks', description: 'House specialties and other featured drinks.' },
+    { name: 'Toppings & Add-Ons', description: 'Extras to customize your drink.' },
+    { name: 'Snacks & Bites', description: 'Food and small bites.' }
+];
+function getKioskMenuCategory(itemName) {
+    const name = String(itemName).toLowerCase();
+    if (/\b(banh mi|popcorn chicken|mochi|soup|pie|cake|cookie|pastry|sandwich|salad|snack|egg waffle|waffle)\b/.test(name)) return 'Snacks & Bites';
+    if (/\b(tapioca pearls?|popping boba|crystal boba|herbal jelly|egg pudding|topping|add[- ]?on)\b/.test(name)) return 'Toppings & Add-Ons';
+    if (/\b(slush|smoothie|frappe|frappuccino|milkshake|ice[- ]blended|blended)\b/.test(name)) return 'Slushes / Smoothies / Ice-Blended';
+    if (/\b(mango|peach|kiwi|passion ?fruit|lychee|strawberry|lemon|grape|watermelon|pineapple|fruit)\b/.test(name) && /\b(tea|green|black|oolong)\b/.test(name)) return 'Fruit Teas / Flavored Teas';
+    if (/\b(fresh milk|latte|matcha milk|ube milk|milk with boba)\b/.test(name)) return 'Fresh Milk / Latte Series';
+    if (/\b(signature|special|specialty|cheese foam|creama|mojito|seasonal|limited)\b/.test(name)) return 'Signature / Specialty Drinks';
+    if (/\b(milk tea|brown sugar|thai tea|taro|classic milk|oolong milk|black milk|green milk)\b/.test(name)) return 'Milk Teas / Classic Milk Teas';
+    return 'Signature / Specialty Drinks';
+}
 const kitchenOrderStatuses = new Set(['New', 'Preparing', 'Ready', 'Cancelled', 'Done']);
 
 // Create pool
@@ -47,10 +67,21 @@ async function renderOrderPage(req, res, view, pageTitle) {
         const result = await pool.query(
             'SELECT menu_item_id, item_name, current_price FROM menu_item ORDER BY item_name'
         );
-        res.render(view, { menuItems: result.rows.map(item => ({
+        const menuItems = result.rows.map(item => ({
             ...item,
-            customizations: getAvailableCustomizations(item.item_name)
-        })), pageTitle });
+            customizations: getAvailableCustomizations(item.item_name),
+            kioskCategory: getKioskMenuCategory(item.item_name)
+        }));
+        res.render(view, {
+            menuItems,
+            pageTitle,
+            kioskMenuCategories: pageTitle === 'Customer Kiosk'
+                ? kioskMenuCategories.map(category => ({
+                    ...category,
+                    items: menuItems.filter(item => item.kioskCategory === category.name)
+                })).filter(category => category.items.length > 0)
+                : []
+        });
     } catch (error) {
         console.error(`Could not load ${pageTitle.toLowerCase()} menu:`, error);
         res.status(500).send('Could not load the menu. Check the database connection.');

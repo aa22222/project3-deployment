@@ -674,3 +674,9 @@ aside {
 .kiosk-page .drink { min-width: 0; padding: 14px; justify-content: flex-start; overflow-wrap: anywhere; }
 .kiosk-page .drink-name { margin: 12px 0 8px; }
 .kiosk-page .price { margin-top: auto; padding-right: 22px; }
+.kiosk-page #menu { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.kiosk-menu-category { min-width: 0; }
+.kiosk-menu-category-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+.kiosk-menu-category-heading h3 { margin: 0; color: var(--green-dark); font-family: Georgia, serif; font-size: 1.2rem; }
+.kiosk-menu-category-heading p { margin: 0; color: var(--muted); font-size: .85rem; }
+.kiosk-menu-category-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
