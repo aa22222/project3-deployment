@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv').config();
 const { createRewards } = require('./lib/rewards');
+const { registerXReport } = require('./lib/x-report');
 
 // Create express app
 const app = express();
@@ -39,6 +40,7 @@ app.use(express.static('public'));
 app.use(express.json());
 const rewards = createRewards({ pool });
 app.use('/api/rewards', rewards.router);
+registerXReport(app, pool);
 
 async function renderOrderPage(req, res, view, pageTitle) {
     try {

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Boba Shop POS - X-report</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body class="x-report-page">
+    <header>
+        <div><h1>Boba Shop POS</h1><p class="subtitle">Manager - X-report</p></div>
+        <a class="manager-back-link" href="/">Back to Portal Hub</a>
+    </header>
+    <main class="manager-main report-main">
+        <nav class="manager-tabs" aria-label="Manager sections">
+            <a class="manager-tab" href="/manager">Inventory</a>
+            <a class="manager-tab" href="/manager/menu">Menu</a>
+            <a class="manager-tab" href="/manager/payroll">Payroll</a>
+            <a class="manager-tab" href="/manager/x-report" aria-current="page">X-report</a>
+        </nav>
+        <section class="manager-overview">
+            <div class="manager-overview-copy">
+                <h2>X-report</h2>
+                <p>A sales snapshot. Viewing this report does not reset totals.</p>
+            </div>
+            <button class="report-print" type="button" id="print-report">Print report</button>
+        </section>
+        <form action="/manager/x-report" class="inventory-toolbar report-toolbar">
+            <label class="menu-search" for="report-date">Report date
+                <input type="date" id="report-date" name="date" value="<%= selectedDate %>" required>
+            </label>
+            <button type="submit">Refresh report</button>
+            <a href="/manager/x-report">Today</a>
+        </form>
+        <% if (error) { %>
+            <p class="report-notice" role="alert"><%= error %></p>
+        <% } else { const money = value => '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); %>
+            <p class="report-meta">Report date: <strong><%= report.date %></strong> &middot; Generated <%= report.generated_at %> (<%= report.timezone %>).</p>
+            <p class="report-meta">From midnight through the selected day, up to generation time. Cancelled orders are excluded. Sales are after rewards discounts; item sales are before discounts.</p>
+            <section class="report-metrics" aria-label="Sales summary">
+                <% [ ['Sales after discounts', money(report.sales)], ['Orders', Number(report.orders).toLocaleString('en-US')], ['Average order', money(Number(report.orders) ? Number(report.sales) / Number(report.orders) : 0)], ['Items sold', Number(report.items).toLocaleString('en-US')], ['Rewards discounts', money(report.discounts)] ].forEach(([label, value]) => { %>
+                    <div class="panel report-metric"><span><%= label %></span><strong><%= value %></strong></div>
+                <% }); %>
+            </section>
+            <% if (!Number(report.orders)) { %><p class="report-notice" role="status">No sales recorded for this date as of generation time.</p><% } %>
+            <section class="panel report-chart report-hourly" aria-labelledby="hourly-title">
+                <h3 id="hourly-title">Hourly sales</h3>
+                <p>Sales after discounts by hour. Hover or focus a bar for its total.</p>
+                <% const maxHour = Math.max(1, ...report.hourly.map(h => Number(h.sales))); %>
+                <p>Hourly scale: <%= money(0) %> to <%= money(maxHour) %>.</p>
+                <div class="hourly-scroll">
+                    <div class="hourly-graph" aria-label="Hourly sales bar chart">
+                        <% report.hourly.forEach(hour => { const value = Number(hour.sales); const label = String(hour.hour).padStart(2, '0') + ':00'; %>
+                            <div class="hourly-column">
+                                <div class="hourly-track"><div class="hourly-bar" tabindex="0" role="img" aria-label="<%= label %>: <%= money(value) %>, <%= hour.orders %> orders" style="height: <%= value / maxHour * 100 %>%"><span class="chart-tooltip"><%= label %>: <%= money(value) %> / <%= hour.orders %> orders</span></div></div>
+                                <span class="hour-label"><%= String(hour.hour).padStart(2, '0') %></span>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <details class="report-data"><summary>View hourly data</summary>
+                    <div class="payroll-table-wrap"><table class="payroll-table"><caption>Hourly sales for <%= report.date %></caption><thead><tr><th scope="col">Hour</th><th scope="col">Orders</th><th scope="col">Sales</th></tr></thead><tbody>
+                        <% report.hourly.forEach(hour => { %><tr><th scope="row"><%= String(hour.hour).padStart(2, '0') %>:00</th><td><%= hour.orders %></td><td><%= money(hour.sales) %></td></tr><% }); %>
+                    </tbody></table></div>
+                </details>
+            </section>
+            <div class="report-chart-grid">
+                <% [ { id: 'payments', title: 'Sales by payment method', rows: report.payments, field: 'sales', format: money }, { id: 'products', title: 'Top 10 items by quantity', rows: report.products, field: 'quantity', format: value => Number(value).toLocaleString('en-US') + ' sold' } ].forEach(chart => { const max = Math.max(1, ...chart.rows.map(row => Number(row[chart.field]))); %>
+                    <section class="panel report-chart" aria-labelledby="<%= chart.id %>-title">
+                        <h3 id="<%= chart.id %>-title"><%= chart.title %></h3>
+                        <% if (!chart.rows.length) { %><p>No sales to display.</p><% } %>
+                        <ul class="report-bars">
+                            <% chart.rows.forEach(row => { %>
+                                <li><div class="report-bar-label"><strong><%= row.label %></strong><span><%= chart.format(row[chart.field]) %></span></div>
+                                    <div class="report-bar-track" aria-hidden="true"><div style="width: <%= Number(row[chart.field]) / max * 100 %>%"></div></div>
+                                    <small><%= chart.id === 'payments' ? row.orders + ' orders' : money(row.sales) + ' before discounts' %></small>
+                                </li>
+                            <% }); %>
+                        </ul>
+                    </section>
+                <% }); %>
+            </div>
+        <% } %>
+    </main>
+    <script src="/x-report.js" defer></script>
+</body>
+</html>

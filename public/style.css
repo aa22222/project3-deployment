@@ -533,6 +533,58 @@ aside {
 }
 
 /* Manager section layout */
+.report-main { max-width: 1200px; }
+.report-toolbar a { min-height: 44px; display: inline-flex; align-items: center; color: var(--green-dark); }
+.report-print { min-height: 44px; padding: 10px 16px; font: inherit; color: var(--green-dark); background: var(--surface); border: 1px solid var(--green); border-radius: 4px; }
+.report-meta { color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.report-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 24px 0; }
+.report-metric { padding: 18px; }
+.report-metric span { display: block; color: var(--muted); font-size: .82rem; }
+.report-metric strong { display: block; margin-top: 10px; font-size: clamp(1.2rem, 2vw, 1.8rem); overflow-wrap: anywhere; }
+.report-chart { min-width: 0; padding: 24px; margin-bottom: 20px; }
+.report-chart h3 { margin: 0 0 8px; font-size: 1.15rem; }
+.report-chart p, .report-bars small { color: var(--muted); font-size: .85rem; line-height: 1.5; }
+.report-chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.hourly-scroll { overflow-x: auto; padding-top: 40px; }
+.hourly-graph { display: grid; grid-template-columns: repeat(24, minmax(20px, 1fr)); gap: 7px; min-width: 660px; padding-top: 6px; }
+.hourly-column { min-width: 0; text-align: center; }
+.hourly-track { height: 200px; display: flex; align-items: end; border-bottom: 1px solid var(--muted); background: repeating-linear-gradient(to top, transparent 0, transparent 49px, var(--line) 49px, var(--line) 50px); }
+.hourly-bar { position: relative; width: 100%; min-height: 3px; background: var(--green); border-radius: 3px 3px 0 0; }
+.hourly-bar:focus-visible { outline: 3px solid #b35426; outline-offset: 3px; }
+.hourly-bar:hover, .hourly-bar:focus { background: #b35426; }
+.hour-label { display: block; margin-top: 8px; color: var(--muted); font-size: .7rem; }
+.chart-tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 1; width: 140px; padding: 7px; color: var(--surface); background: var(--ink); border-radius: 4px; font-size: .75rem; }
+.hourly-column:nth-child(n+19) .chart-tooltip { left: auto; right: 0; }
+.hourly-bar:is(:hover, :focus) .chart-tooltip { display: block; }
+.report-data { margin-top: 22px; }
+.report-data summary { min-height: 44px; padding: 10px 0; cursor: pointer; color: var(--green-dark); }
+.report-data summary:focus-visible { outline: 3px solid #b35426; outline-offset: 3px; }
+.report-bars { display: grid; gap: 20px; padding: 0; margin: 24px 0 0; list-style: none; }
+.report-bar-label { display: flex; justify-content: space-between; gap: 12px; font-size: .9rem; }
+.report-bar-label strong { min-width: 0; overflow-wrap: anywhere; }
+.report-bar-label span { flex-shrink: 0; }
+.report-bar-track { height: 12px; margin: 8px 0 4px; background: var(--line); border-radius: 3px; }
+.report-bar-track div { height: 100%; background: var(--green); border-radius: 3px; }
+.report-notice { padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+@media (max-width: 850px) { .report-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 650px) {
+    .manager-tabs { gap: 16px; flex-wrap: wrap; }
+    .report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .report-chart-grid { grid-template-columns: 1fr; gap: 0; }
+    .report-chart { padding: 18px; }
+}
+@media print {
+    .x-report-page { background: white; }
+    .x-report-page header { color: var(--ink); background: white; padding: 0 0 16px; }
+    .x-report-page :is(.manager-tabs, .manager-back-link, .report-toolbar, .report-print, .report-data) { display: none; }
+    .x-report-page .report-main { max-width: none; min-height: auto; padding: 0; }
+    .x-report-page .report-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .x-report-page .report-chart-grid { grid-template-columns: 1fr 1fr; }
+    .x-report-page .panel { break-inside: avoid; }
+    .x-report-page .hourly-graph { min-width: 0; gap: 3px; grid-template-columns: repeat(24, minmax(0, 1fr)); }
+    .x-report-page .hourly-scroll { overflow: visible; }
+    .x-report-page :is(.hourly-bar, .report-bar-track) { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
 .menu-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto auto; align-items: end; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--border); }
 .menu-edit-row[hidden] { display: none; }
 .menu-edit-row label { min-width: 0; font-size: .85rem; font-weight: 700; }

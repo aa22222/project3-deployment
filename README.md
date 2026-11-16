@@ -49,6 +49,17 @@ existing menu items and edit names and prices. Save each item separately; Reset
 restores its last saved values. Changes are stored in PostgreSQL and appear on
 cashier, kiosk, and mobile menus when those pages are next loaded.
 
+## Manager X-report
+
+Open **X-report** in the manager portal (`/manager/x-report`) for a read-only
+sales snapshot. It defaults to today; choose a date and refresh to view another
+day. Dates and hours use the PostgreSQL session timezone shown on the report.
+The report includes sales after rewards discounts, order count, average order
+value, items sold, discounts, hourly sales, payment totals, and the top ten items
+by quantity. Item sales use the unit prices saved with orders, before discounts.
+Cancelled orders are excluded. Viewing or printing never resets sales totals.
+Use **Refresh report** to fetch new sales; the report does not refresh automatically.
+
 ## Mobile ordering
 
 Open `/mobile` (also linked from the portal) for a phone-friendly menu with image
@@ -128,7 +139,8 @@ requested only after the transaction commits.
 
 ### Verification
 
-`npm test` runs provider request checks without sending messages. Set
-`REWARDS_DB_TEST=true` to include PostgreSQL transaction and real menu checks
+`npm test` runs provider request, menu editing, and X-report page checks without
+sending messages. Set `REWARDS_DB_TEST=true` to include PostgreSQL transaction,
+X-report aggregation, and real menu checks
 using your configured database. Transaction tests use connection-local temporary
 tables and roll back; menu checks only read shop data. No shop records are changed.
