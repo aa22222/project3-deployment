@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
+    <% if (pageTitle === 'Customer Kiosk') { %>
+    <script>try { if (localStorage.getItem('kiosk-high-contrast') === 'true') document.documentElement.dataset.highContrast = 'true'; } catch (_) {}</script>
+    <% } %>
 </head>
 <% const isMobile = pageTitle === 'Mobile Ordering'; const isKiosk = pageTitle === 'Customer Kiosk'; const isCustomer = isKiosk || isMobile; const hasEditor = isCustomer || pageTitle === 'Cashier'; %>
 <body class="order-page <%= isMobile ? 'kiosk-page mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
@@ -21,6 +24,7 @@
     <% if (isCustomer && kioskMenuCategories.length) { %>
     <nav class="kiosk-category-nav" aria-label="Menu categories">
         <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
+        <% if (isKiosk) { %><button class="contrast-toggle" id="contrast-toggle" type="button" aria-pressed="false">High contrast: Off</button><% } %>
     </nav>
     <% } %>
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
@@ -175,6 +179,19 @@
             });
         };
         const categoryNav = document.querySelector('.kiosk-category-nav');
+        const contrastToggle = document.getElementById('contrast-toggle');
+        if (contrastToggle) {
+            const contrastEnabled = document.documentElement.dataset.highContrast === 'true';
+            contrastToggle.setAttribute('aria-pressed', String(contrastEnabled));
+            contrastToggle.textContent = `High contrast: ${contrastEnabled ? 'On' : 'Off'}`;
+            contrastToggle.addEventListener('click', () => {
+                const enabled = contrastToggle.getAttribute('aria-pressed') !== 'true';
+                document.documentElement.dataset.highContrast = String(enabled);
+                contrastToggle.setAttribute('aria-pressed', String(enabled));
+                contrastToggle.textContent = `High contrast: ${enabled ? 'On' : 'Off'}`;
+                try { localStorage.setItem('kiosk-high-contrast', String(enabled)); } catch (_) {}
+            });
+        }
         if (categoryNav) {
             const updateNavHeight = () => document.body.style.setProperty('--category-nav-height', `${categoryNav.getBoundingClientRect().height}px`);
             new ResizeObserver(updateNavHeight).observe(categoryNav);
