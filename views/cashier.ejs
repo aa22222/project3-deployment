@@ -10,12 +10,8 @@
 <body class="order-page <%= isMobile ? 'mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
     <a class="skip-link" href="#menu-heading">Skip to menu</a>
     <a class="skip-link" href="#order-heading">Skip to order</a>
-    <header>
-        <div><h1><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Choose menu items and customize your order' : 'Select menu items to add them, then customize the order' %></p></div>
-    </header>
     <% if (isKiosk && kioskMenuCategories.length) { %>
     <nav class="kiosk-category-nav" aria-label="Menu categories">
-        <span>Browse</span>
         <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>"><%= category.name %></a><% }); %>
     </nav>
     <% } %>
@@ -23,7 +19,7 @@
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
             <h2 tabindex="-1" id="menu-heading">Menu</h2>
-            <% if (hasEditor) { %>
+            <% if (isMobile) { %>
             <label class="menu-search" for="menu-search">Find a menu item
                 <input id="menu-search" type="search" placeholder="Search by name…" autocomplete="off" aria-controls="menu">
             </label>
