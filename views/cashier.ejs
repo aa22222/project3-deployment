@@ -11,6 +11,12 @@
     <header>
         <div><h1><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Choose menu items and customize your order' : 'Select menu items to add them, then customize the order' %></p></div>
     </header>
+    <% if (isKiosk && kioskMenuCategories.length) { %>
+    <nav class="kiosk-category-nav" aria-label="Menu categories">
+        <span>Browse</span>
+        <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>"><%= category.name %></a><% }); %>
+    </nav>
+    <% } %>
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
@@ -23,16 +29,16 @@
             <% } %>
             <div id="menu">
                 <% if (isKiosk) { %>
-                    <% kioskMenuCategories.forEach(category => { %>
-                    <section class="kiosk-menu-category" aria-labelledby="category-<%= kioskMenuCategories.indexOf(category) %>">
+                    <% kioskMenuCategories.forEach((category, index) => { %>
+                    <section class="kiosk-menu-category" id="kiosk-category-<%= index %>" aria-labelledby="category-<%= index %>">
                         <div class="kiosk-menu-category-heading">
-                            <h3 id="category-<%= kioskMenuCategories.indexOf(category) %>"><%= category.name %></h3>
+                            <h3 id="category-<%= index %>"><%= category.name %></h3>
                             <p><%= category.description %></p>
                         </div>
                         <div class="kiosk-menu-category-items">
                         <% category.items.forEach(item => { %>
                         <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>">
-                        <span class="menu-image-placeholder" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M22 17h26l-4 39H26l-4-39Zm-4 0h34M39 17l4-12"/><circle cx="32" cy="45" r="2"/><circle cx="40" cy="46" r="2"/><circle cx="35" cy="51" r="2"/></svg><span>Image coming soon</span></span>
+                        <span class="menu-image-placeholder kiosk-drink-art" aria-hidden="true"><svg viewBox="0 0 120 130" fill="none"><path d="m71 18 19-13" stroke="#61202d" stroke-width="5" stroke-linecap="round"/><path d="M31 27h63l-8 87H40l-9-87Z" fill="#fff9ec" stroke="#61202d" stroke-width="4"/><path d="M36 54h53l-5 53H42l-6-53Z" fill="#d79261"/><path d="M37 52h53" stroke="#61202d" stroke-width="4"/><circle cx="51" cy="96" r="5" fill="#61202d"/><circle cx="66" cy="101" r="5" fill="#61202d"/><circle cx="77" cy="91" r="5" fill="#61202d"/><path d="m48 37 3 10m29-10-3 10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></span>
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
                         </button>
@@ -146,6 +152,10 @@
             const count = buttons.filter(button => !button.hidden).length;
             document.querySelectorAll('.kiosk-menu-category').forEach(category => {
                 category.hidden = !category.querySelector('.drink:not([hidden])');
+            });
+            document.querySelectorAll('.kiosk-category-nav a').forEach(link => {
+                const category = document.querySelector(link.getAttribute('href'));
+                link.hidden = Boolean(category?.hidden);
             });
             document.getElementById('menu-results').textContent = count ? `${count} items available` : 'No matching items. Try another name.';
         });
