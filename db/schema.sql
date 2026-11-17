@@ -4,8 +4,12 @@
 CREATE TABLE IF NOT EXISTS menu_item (
     menu_item_id INTEGER PRIMARY KEY,
     item_name VARCHAR NOT NULL UNIQUE,
-    current_price NUMERIC(8, 2) NOT NULL CHECK (current_price >= 0)
+    current_price NUMERIC(8, 2) NOT NULL CHECK (current_price >= 0),
+    is_seasonal BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+ALTER TABLE menu_item
+    ADD COLUMN IF NOT EXISTS is_seasonal BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE TABLE IF NOT EXISTS inventory_item (
     inventory_item_id INTEGER PRIMARY KEY,

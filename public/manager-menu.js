@@ -18,6 +18,7 @@ menuRows.forEach(row => {
         event.preventDefault();
         const name = row.elements.name;
         const price = row.elements.price;
+        const isSeasonal = row.elements.isSeasonal;
         if (!name.value.trim()) {
             feedback.textContent = 'Enter an item name.';
             name.focus();
@@ -30,12 +31,17 @@ menuRows.forEach(row => {
             const response = await fetch(`/api/menu/${row.dataset.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name.value.trim(), price: Number(price.value) })
+                body: JSON.stringify({
+                    name: name.value.trim(),
+                    price: Number(price.value),
+                    isSeasonal: isSeasonal.checked
+                })
             });
             const item = await response.json();
             if (!response.ok) throw new Error(item.error || 'Could not save the menu item.');
             name.value = name.defaultValue = item.item_name;
             price.value = price.defaultValue = Number(item.current_price).toFixed(2);
+            isSeasonal.checked = isSeasonal.defaultChecked = item.is_seasonal;
             feedback.textContent = 'Saved';
         } catch (error) {
             feedback.textContent = error.message;

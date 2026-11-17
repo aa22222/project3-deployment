@@ -1285,7 +1285,7 @@ aside {
 }
 .menu-edit-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px auto auto;
+  grid-template-columns: minmax(0, 1fr) 150px auto auto auto;
   align-items: end;
   gap: 12px;
   padding: 18px 0;
@@ -1310,6 +1310,18 @@ aside {
   background: var(--surface);
   border: 1px solid var(--muted);
   border-radius: 4px;
+}
+.menu-edit-row .menu-seasonal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.menu-edit-row .menu-seasonal input {
+  width: auto;
+  min-height: auto;
+  margin: 0;
 }
 .menu-edit-row button {
   min-height: 44px;
@@ -1343,6 +1355,9 @@ aside {
     grid-column: 1 / -1;
   }
   .menu-edit-row label:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+  .menu-edit-row .menu-seasonal {
     grid-column: 1 / -1;
   }
 }

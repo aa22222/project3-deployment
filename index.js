@@ -105,7 +105,7 @@ app.get('/manager/menu', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
         const menuItems = (await pool.query(
-            'SELECT menu_item_id, item_name, current_price FROM menu_item ORDER BY item_name'
+            'SELECT menu_item_id, item_name, current_price, is_seasonal FROM menu_item ORDER BY item_name'
         )).rows;
         res.render('manager-menu', { menuItems, error: '' });
     } catch (error) {
@@ -117,15 +117,16 @@ app.patch('/api/menu/:id', async (req, res) => {
     const id = Number(req.params.id);
     const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
     const price = req.body?.price;
+    const isSeasonal = req.body?.isSeasonal;
     if (!Number.isSafeInteger(id) || id < 1 || !name || name.length > 200 ||
         typeof price !== 'number' || !Number.isFinite(price) || price < 0 || price > 999999.99 ||
-        !/^\d+(\.\d{1,2})?$/.test(String(price))) {
-        return res.status(400).json({ error: 'Enter a name of 1–200 characters and a price from 0 to 999999.99 with at most two decimal places.' });
+        !/^\d+(\.\d{1,2})?$/.test(String(price)) || typeof isSeasonal !== 'boolean') {
+        return res.status(400).json({ error: 'Enter a name of 1–200 characters, a valid price, and whether the item is seasonal.' });
     }
     try {
         const item = (await pool.query(
-            'UPDATE menu_item SET item_name = $1, current_price = $2 WHERE menu_item_id = $3 RETURNING menu_item_id, item_name, current_price',
-            [name, price, id]
+            'UPDATE menu_item SET item_name = $1, current_price = $2, is_seasonal = $3 WHERE menu_item_id = $4 RETURNING menu_item_id, item_name, current_price, is_seasonal',
+            [name, price, isSeasonal, id]
         )).rows[0];
         if (!item) return res.status(404).json({ error: 'Menu item not found. Refresh the page.' });
         res.json(item);
