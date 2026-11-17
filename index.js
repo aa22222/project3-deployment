@@ -9,6 +9,12 @@ const { registerXReport } = require('./lib/x-report');
 // Create express app
 const app = express();
 const port = Number(process.env.PORT) || 3000;
+function getMenuImage(itemName) {
+    const name = String(itemName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const filename = ['png', 'jpg', 'webp'].map(extension => `${name}.${extension}`)
+        .find(file => fs.existsSync(path.join(__dirname, 'public', 'images', 'menu', file)));
+    return filename ? `/images/menu/${filename}` : null;
+}
 const drinkCustomizations = ['Boba', 'Less ice', 'More ice', 'Less sweet'];
 function getAvailableCustomizations(itemName) {
     const name = String(itemName).toLowerCase();
@@ -69,6 +75,7 @@ async function renderOrderPage(req, res, view, pageTitle) {
         );
         const menuItems = result.rows.map(item => ({
             ...item,
+            imageUrl: getMenuImage(item.item_name),
             customizations: getAvailableCustomizations(item.item_name),
             kioskCategory: getKioskMenuCategory(item.item_name)
         }));

@@ -40,7 +40,11 @@
                         <div class="kiosk-menu-category-items">
                         <% category.items.forEach(item => { %>
                         <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
+                        <% if (item.imageUrl) { %>
+                        <span class="kiosk-drink-art"><img class="menu-image" src="<%= item.imageUrl %>" alt="" loading="lazy" decoding="async"></span>
+                        <% } else { %>
                         <span class="menu-image-placeholder kiosk-drink-art" aria-hidden="true"><svg viewBox="0 0 120 130" fill="none"><path d="m71 18 19-13" stroke="#61202d" stroke-width="5" stroke-linecap="round"/><path d="M31 27h63l-8 87H40l-9-87Z" fill="#fff9ec" stroke="#61202d" stroke-width="4"/><path d="M36 54h53l-5 53H42l-6-53Z" fill="#d79261"/><path d="M37 52h53" stroke="#61202d" stroke-width="4"/><circle cx="51" cy="96" r="5" fill="#61202d"/><circle cx="66" cy="101" r="5" fill="#61202d"/><circle cx="77" cy="91" r="5" fill="#61202d"/><path d="m48 37 3 10m29-10-3 10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></span>
+                        <% } %>
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
                         </button>
@@ -51,7 +55,13 @@
                 <% } else { %>
                     <% menuItems.forEach(item => { %>
                         <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
-                        <% if (hasEditor) { %><span class="menu-image-placeholder" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M22 17h26l-4 39H26l-4-39Zm-4 0h34M39 17l4-12"/><circle cx="32" cy="45" r="2"/><circle cx="40" cy="46" r="2"/><circle cx="35" cy="51" r="2"/></svg><span>Image coming soon</span></span><% } %>
+                        <% if (hasEditor) { %>
+                            <% if (item.imageUrl) { %>
+                            <img class="menu-image" src="<%= item.imageUrl %>" alt="" loading="lazy" decoding="async">
+                            <% } else { %>
+                            <span class="menu-image-placeholder" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M22 17h26l-4 39H26l-4-39Zm-4 0h34M39 17l4-12"/><circle cx="32" cy="45" r="2"/><circle cx="40" cy="46" r="2"/><circle cx="35" cy="51" r="2"/></svg><span>Image coming soon</span></span>
+                            <% } %>
+                        <% } %>
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
                         </button>

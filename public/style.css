@@ -1545,6 +1545,14 @@ aside {
   margin-top: auto;
   padding-right: 22px;
 }
+.menu-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #bd2633;
+  border-radius: 3px;
+}
 .menu-image-placeholder {
   display: flex;
   flex-direction: column;
@@ -1864,6 +1872,9 @@ aside {
   width: auto;
   height: 95%;
   filter: drop-shadow(0 8px 5px rgb(72 45 30 / 15%));
+}
+.kiosk-page .kiosk-drink-art .menu-image {
+  height: 100%;
 }
 .kiosk-page .drink-name {
   margin: 14px 0 7px;

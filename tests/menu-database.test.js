@@ -16,7 +16,16 @@ test('mobile and kiosk render the complete PostgreSQL menu with identical IDs an
             const items = [...html.matchAll(/class="drink"[^>]*data-id="([^"]+)"[^>]*data-name="[^"]*"[^>]*data-price="([^"]+)"/g)].map(match => ({ id: Number(match[1]), price: Number(match[2]) }));
             assert.deepEqual(items, rows.map(row => ({ id: Number(row.menu_item_id), price: Number(row.current_price) })));
             menus.push(items);
-            if (route === '/mobile') assert.equal((html.match(/Image coming soon/g) || []).length, rows.length);
+            if (route === '/mobile') {
+                const images = [...html.matchAll(/class="menu-image" src="([^"]+)"/g)];
+                assert.equal(images.length + (html.match(/Image coming soon/g) || []).length, rows.length);
+                for (const [, imageUrl] of images) {
+                    const image = await fetch(base + imageUrl);
+                    assert.equal(image.status, 200);
+                    assert.match(image.headers.get('content-type'), /^image\//);
+                    await image.arrayBuffer();
+                }
+            }
         }
         assert.deepEqual(menus[0], menus[1]);
         console.log(`Verified ${rows.length} real menu items on kiosk and mobile`);
