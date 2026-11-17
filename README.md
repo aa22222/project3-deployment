@@ -63,7 +63,7 @@ Use **Refresh report** to fetch new sales; the report does not refresh automatic
 ## Mobile ordering
 
 Open `/mobile` (also linked from the portal) for a phone-friendly menu with menu
-photos, search, per-item customization, rewards, and checkout. It uses the
+photos, kiosk-style categories, per-item customization, rewards, and checkout. It uses the
 same menu and order backend as the cashier and kiosk. Checkout retry identifiers
 prevent duplicate submissions during a server session; they reset on restart. Mobile and
 kiosk photos are matched by name in `public/images/menu`: for example, `Taro Milk Tea`

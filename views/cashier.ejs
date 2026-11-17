@@ -7,26 +7,20 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <% const isMobile = pageTitle === 'Mobile Ordering'; const isKiosk = pageTitle === 'Customer Kiosk'; const hasEditor = isKiosk || isMobile; %>
-<body class="order-page <%= isMobile ? 'mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
+<body class="order-page <%= isMobile ? 'kiosk-page mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
     <a class="skip-link" href="#menu-heading">Skip to menu</a>
     <a class="skip-link" href="#order-heading">Skip to order</a>
-    <% if (isKiosk && kioskMenuCategories.length) { %>
+    <% if (hasEditor && kioskMenuCategories.length) { %>
     <nav class="kiosk-category-nav" aria-label="Menu categories">
-        <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>"><%= category.name %></a><% }); %>
+        <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
     </nav>
     <% } %>
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
             <h2 tabindex="-1" id="menu-heading">Menu</h2>
-            <% if (isMobile) { %>
-            <label class="menu-search" for="menu-search">Find a menu item
-                <input id="menu-search" type="search" placeholder="Search by name…" autocomplete="off" aria-controls="menu">
-            </label>
-            <p id="menu-results" role="status"><%= menuItems.length %> items available</p>
-            <% } %>
             <div id="menu">
-                <% if (isKiosk) { %>
+                <% if (hasEditor) { %>
                     <% kioskMenuCategories.forEach((category, index) => { %>
                     <section class="kiosk-menu-category" id="kiosk-category-<%= index %>" aria-labelledby="category-<%= index %>">
                         <div class="kiosk-menu-category-heading">
@@ -169,20 +163,12 @@
                 announcer.textContent = message;
             });
         };
-        document.getElementById('menu-search')?.addEventListener('input', event => {
-            const search = event.target.value.trim().toLowerCase();
-            const buttons = [...document.querySelectorAll('.drink')];
-            buttons.forEach(button => button.hidden = !button.dataset.name.toLowerCase().includes(search));
-            const count = buttons.filter(button => !button.hidden).length;
-            document.querySelectorAll('.kiosk-menu-category').forEach(category => {
-                category.hidden = !category.querySelector('.drink:not([hidden])');
-            });
-            document.querySelectorAll('.kiosk-category-nav a').forEach(link => {
-                const category = document.querySelector(link.getAttribute('href'));
-                link.hidden = Boolean(category?.hidden);
-            });
-            document.getElementById('menu-results').textContent = count ? `${count} items available` : 'No matching items. Try another name.';
-        });
+        const categoryNav = document.querySelector('.kiosk-category-nav');
+        if (categoryNav) {
+            const updateNavHeight = () => document.body.style.setProperty('--category-nav-height', `${categoryNav.getBoundingClientRect().height}px`);
+            new ResizeObserver(updateNavHeight).observe(categoryNav);
+            updateNavHeight();
+        }
 
         const editor = document.getElementById('drink-editor');
         const form = document.getElementById('drink-form');

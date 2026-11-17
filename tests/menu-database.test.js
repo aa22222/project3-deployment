@@ -14,11 +14,11 @@ test('mobile and kiosk render the complete PostgreSQL menu with identical IDs an
             assert.equal(response.status, 200);
             const html = await response.text();
             const items = [...html.matchAll(/class="drink"[^>]*data-id="([^"]+)"[^>]*data-name="[^"]*"[^>]*data-price="([^"]+)"/g)].map(match => ({ id: Number(match[1]), price: Number(match[2]) }));
-            assert.deepEqual(items, rows.map(row => ({ id: Number(row.menu_item_id), price: Number(row.current_price) })));
+            assert.deepEqual([...items].sort((a, b) => a.id - b.id), rows.map(row => ({ id: Number(row.menu_item_id), price: Number(row.current_price) })).sort((a, b) => a.id - b.id));
             menus.push(items);
             if (route === '/mobile') {
                 const images = [...html.matchAll(/class="menu-image" src="([^"]+)"/g)];
-                assert.equal(images.length + (html.match(/Image coming soon/g) || []).length, rows.length);
+                assert.equal(images.length + (html.match(/class="menu-image-placeholder/g) || []).length, rows.length);
                 for (const [, imageUrl] of images) {
                     const image = await fetch(base + imageUrl);
                     assert.equal(image.status, 200);

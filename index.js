@@ -82,7 +82,7 @@ async function renderOrderPage(req, res, view, pageTitle) {
         res.render(view, {
             menuItems,
             pageTitle,
-            kioskMenuCategories: pageTitle === 'Customer Kiosk'
+            kioskMenuCategories: ['Customer Kiosk', 'Mobile Ordering'].includes(pageTitle)
                 ? kioskMenuCategories.map(category => ({
                     ...category,
                     items: menuItems.filter(item => item.kioskCategory === category.name)

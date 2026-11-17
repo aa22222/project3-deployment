@@ -1737,6 +1737,9 @@ aside {
 .kiosk-page {
   --kiosk-accent: #9b3c48;
   --kiosk-warm: #f7eee2;
+  --category-nav-height: 70px;
+  --page-gutter: clamp(22px, 3vw, 52px);
+  --order-width: clamp(330px, 29vw, 420px);
   background: #f7eee2;
 }
 .kiosk-page header {
@@ -1755,11 +1758,10 @@ aside {
   top: 0;
   z-index: 5;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 10px clamp(20px, 3vw, 48px);
-  overflow-x: auto;
-  white-space: nowrap;
   background: #fffaf2;
   border-bottom: 1px solid #ded2c2;
   box-shadow: 0 3px 10px rgb(46 40 38 / 8%);
@@ -1774,7 +1776,11 @@ aside {
   display: inline-flex;
   align-items: center;
   min-height: 48px;
-  padding: 0 18px;
+  padding: 8px 14px;
+  max-width: 100%;
+  justify-content: center;
+  text-align: center;
+  overflow-wrap: anywhere;
   color: var(--green-dark);
   background: white;
   border: 1px solid #d8cfc4;
@@ -1789,11 +1795,11 @@ aside {
   background: var(--green-dark);
 }
 .kiosk-page main {
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  grid-template-columns: minmax(0, 1fr) var(--order-width);
   gap: 30px;
   max-width: 1760px;
-  min-height: calc(100vh - 170px);
-  padding: 32px clamp(22px, 3vw, 52px);
+  min-height: calc(100dvh - var(--category-nav-height));
+  padding: 32px var(--page-gutter);
 }
 .kiosk-page .menu-panel {
   min-width: 0;
@@ -1816,7 +1822,7 @@ aside {
   font-size: 0.95rem;
 }
 .kiosk-page .kiosk-menu-category {
-  scroll-margin-top: 82px;
+  scroll-margin-top: calc(var(--category-nav-height) + 16px);
 }
 .kiosk-page .kiosk-menu-category-heading {
   align-items: center;
@@ -1900,16 +1906,34 @@ aside {
   font-size: 1.5rem;
 }
 .kiosk-page aside {
-  position: sticky;
-  top: 78px;
-  max-height: calc(100dvh - 96px);
+  position: fixed;
+  top: calc(var(--category-nav-height) + 24px);
+  bottom: 24px;
+  right: max(var(--page-gutter), calc((100vw - 1760px) / 2 + var(--page-gutter)));
+  width: var(--order-width);
+  max-height: none;
   min-height: 0;
   padding: 24px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c8b5a5 transparent;
   border: 1px solid #e0d1be;
   border-top: 6px solid var(--kiosk-accent);
   border-radius: 14px;
   box-shadow: 0 8px 24px rgb(61 45 36 / 10%);
+}
+.kiosk-page aside > * {
+  flex-shrink: 0;
+  min-width: 0;
+}
+.kiosk-page .cart-line {
+  grid-template-columns: minmax(0, 1fr) auto;
+  overflow-wrap: anywhere;
+}
+.kiosk-page .line-actions {
+  flex-wrap: wrap;
 }
 .kiosk-page .cart-title {
   display: flex;
@@ -1921,6 +1945,8 @@ aside {
 .kiosk-page #cart {
   max-height: none;
   min-height: 100px;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 .kiosk-page .empty {
   padding: 34px 10px;
@@ -1950,13 +1976,67 @@ aside {
   }
   .kiosk-page aside {
     position: static;
+    width: auto;
     max-height: none;
     min-height: 0;
     overflow: visible;
   }
-  .kiosk-page #cart {
-    max-height: 36vh;
-  }
+}
+
+/* Mobile uses the kiosk menu and cards with a persistent order shortcut. */
+.kiosk-page.mobile-page main {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 720px;
+  padding: 24px 16px calc(100px + env(safe-area-inset-bottom));
+}
+.mobile-page .kiosk-category-nav {
+  gap: 8px;
+  padding: 12px 16px;
+}
+.mobile-page .kiosk-category-nav a {
+  flex: 1 1 calc(33.333% - 8px);
+  min-height: 44px;
+  padding: 8px;
+  font-size: 0.82rem;
+}
+.mobile-page .kiosk-menu-category-items {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.mobile-page .drink {
+  min-height: 240px;
+  padding: 12px;
+}
+.mobile-page .kiosk-drink-art {
+  width: 100%;
+  height: clamp(120px, 32vw, 190px);
+  min-height: 0;
+}
+.mobile-page .drink-name {
+  font-size: 1rem;
+}
+.mobile-page aside {
+  position: static;
+  width: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 20px;
+}
+.mobile-page .mobile-order-nav {
+  position: fixed;
+  top: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 18px rgb(61 45 36 / 8%);
+}
+.mobile-page #menu-heading,
+.mobile-page #order-heading {
+  scroll-margin-top: calc(var(--category-nav-height) + 16px);
 }
 @media (max-width: 520px) {
   .kiosk-page header {
