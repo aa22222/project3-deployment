@@ -13,18 +13,25 @@
 <body class="order-page <%= isMobile ? 'kiosk-page mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
     <a class="skip-link" href="#menu-heading">Skip to menu</a>
     <a class="skip-link" href="#order-heading">Skip to order</a>
-    <% if (isCustomer) { %>
-    <div id="language-tools" class="language-tools" translate="no">
+    <% if (hasEditor) { %>
+    <% if (!isKiosk) { %><div id="language-tools" class="language-tools" translate="no">
         <label for="page-language">Language / Idioma</label>
         <select id="page-language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option></select>
         <span id="language-status" role="status" aria-live="polite"></span>
-    </div>
+    </div><% } %>
     <script src="/translate.js" defer></script>
     <% } %>
     <% if (isCustomer && kioskMenuCategories.length) { %>
     <nav class="kiosk-category-nav" aria-label="Menu categories">
         <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
-        <% if (isKiosk) { %><button class="contrast-toggle" id="contrast-toggle" type="button" aria-pressed="false">High contrast: Off</button><% } %>
+        <% if (isKiosk) { %>
+        <div id="language-tools" class="language-tools kiosk-language-tools" translate="no">
+            <label for="page-language">Language / Idioma</label>
+            <select id="page-language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option></select>
+            <span id="language-status" role="status" aria-live="polite"></span>
+        </div>
+        <button class="contrast-toggle" id="contrast-toggle" type="button" aria-pressed="false">High contrast: Off</button>
+        <% } %>
     </nav>
     <% } %>
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>

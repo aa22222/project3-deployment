@@ -1823,7 +1823,7 @@ aside {
 }
 .contrast-toggle {
   min-height: 48px;
-  margin-left: auto;
+  margin-left: 0;
   padding: 8px 14px;
   color: white;
   background: #263a32;
@@ -1832,6 +1832,27 @@ aside {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+.kiosk-language-tools {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  gap: 8px;
+}
+.kiosk-language-tools label {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.kiosk-language-tools select {
+  min-height: 48px;
+  padding: 8px 12px;
+  font: inherit;
+  color: #000;
+  background: #fff;
+  border: 2px solid #263a32;
+  border-radius: 8px;
 }
 .contrast-toggle[aria-pressed="true"] {
   color: #000;
@@ -1914,7 +1935,7 @@ aside {
   overflow: hidden;
   border: 0;
   border-radius: 10px;
-  background: #fff;
+  background: #fefcfa;
 }
 .kiosk-page .kiosk-drink-art svg {
   width: auto;
@@ -1923,6 +1944,7 @@ aside {
 }
 .kiosk-page .kiosk-drink-art .menu-image {
   height: 100%;
+  background: #fefcfa;
 }
 .kiosk-page .drink-name {
   margin: 14px 0 7px;
@@ -2027,6 +2049,8 @@ html[data-high-contrast="true"] .kiosk-page {
 }
 html[data-high-contrast="true"] .kiosk-page header,
 html[data-high-contrast="true"] .kiosk-page .kiosk-category-nav,
+html[data-high-contrast="true"] .kiosk-page .kiosk-language-tools,
+html[data-high-contrast="true"] .kiosk-page .kiosk-language-tools select,
 html[data-high-contrast="true"] .kiosk-page .drink,
 html[data-high-contrast="true"] .kiosk-page aside,
 html[data-high-contrast="true"] .kiosk-page .cart-line,
