@@ -1821,6 +1821,23 @@ aside {
   color: white;
   background: var(--green-dark);
 }
+.contrast-toggle {
+  min-height: 48px;
+  margin-left: auto;
+  padding: 8px 14px;
+  color: white;
+  background: #263a32;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.contrast-toggle[aria-pressed="true"] {
+  color: #000;
+  background: #ffdf00;
+  border-color: #000;
+}
 .kiosk-page main {
   grid-template-columns: minmax(0, 1fr) var(--order-width);
   gap: 30px;
@@ -1993,6 +2010,57 @@ aside {
 .kiosk-page :is(input, select, button, a):focus-visible {
   outline: 4px solid #b35426;
   outline-offset: 3px;
+}
+html[data-high-contrast="true"] .kiosk-page {
+  --ink: #000;
+  --muted: #1a1a1a;
+  --soft-ink: #1a1a1a;
+  --green: #000;
+  --green-dark: #000;
+  --page: #fff;
+  --surface: #fff;
+  --border: #000;
+  --line: #000;
+  --kiosk-accent: #000;
+  color: #000;
+  background: #fff;
+}
+html[data-high-contrast="true"] .kiosk-page header,
+html[data-high-contrast="true"] .kiosk-page .kiosk-category-nav,
+html[data-high-contrast="true"] .kiosk-page .drink,
+html[data-high-contrast="true"] .kiosk-page aside,
+html[data-high-contrast="true"] .kiosk-page .cart-line,
+html[data-high-contrast="true"] .kiosk-page .checkout select {
+  color: #000;
+  background: #fff;
+  border-color: #000;
+}
+html[data-high-contrast="true"] .kiosk-page .kiosk-category-nav a,
+html[data-high-contrast="true"] .kiosk-page .checkout > button,
+html[data-high-contrast="true"] .kiosk-page .drink::after {
+  color: #fff;
+  background: #000;
+  border-color: #000;
+}
+html[data-high-contrast="true"] .kiosk-page .kiosk-category-nav a:hover,
+html[data-high-contrast="true"] .kiosk-page .kiosk-category-nav a:focus-visible,
+html[data-high-contrast="true"] .kiosk-page .checkout > button:hover,
+html[data-high-contrast="true"] .kiosk-page .drink:hover {
+  color: #000;
+  background: #ffdf00;
+  border-color: #000;
+}
+html[data-high-contrast="true"] .kiosk-page :is(input, select, button, a):focus-visible,
+html[data-high-contrast="true"] .kiosk-page .drink:focus-visible {
+  outline: 5px solid #ffbf00;
+  outline-offset: 3px;
+}
+html[data-high-contrast="true"] .kiosk-page .kiosk-menu-category-heading,
+html[data-high-contrast="true"] .kiosk-page .kiosk-menu-category-heading p,
+html[data-high-contrast="true"] .kiosk-page .price,
+html[data-high-contrast="true"] .kiosk-page .cart-hint,
+html[data-high-contrast="true"] .kiosk-page .cart-line small {
+  color: #000;
 }
 @media (max-width: 850px) {
   .kiosk-page main {
