@@ -83,6 +83,34 @@ PSQL_PASSWORD=your_database_password
 PSQL_PORT=5432
 ```
 
+## Local weather forecast
+
+The kiosk (`/kiosk`) and mobile ordering (`/mobile`) pages have a compact,
+expandable **College Station weather** panel. It shows current Fahrenheit
+temperature/conditions, the next three future hourly forecasts, and the weather
+observation time. All displayed times use `America/Chicago`, including midnight
+and daylight-saving changes. Weather codes have readable descriptions; unknown
+codes display “Conditions unavailable.”
+
+`GET /api/weather` uses Open-Meteo's free noncommercial endpoint with fixed
+College Station coordinates. No account, API key, payment details, new `.env`
+variables, dependencies, or database changes are needed. There is no paid
+fallback. Attribution links to [Open-Meteo](https://open-meteo.com/); see its
+[API documentation](https://open-meteo.com/en/docs) and
+[free-use limits](https://open-meteo.com/en/terms).
+
+Successful responses are cached for 15 minutes, and simultaneous refreshes
+share one provider request. Provider calls time out after six seconds; failures
+have a 30-second retry cooldown. Weather loads once per page and on manual
+refresh, without polling. Expired weather is not shown when a refresh fails.
+An unavailable message leaves ordering usable. The existing language selector
+translates the weather text without changing temperatures or the cart.
+
+Run `npm test` for weather contract, caching, midnight selection, error handling,
+and kiosk/mobile visibility checks. Provider calls are stubbed in automated
+tests. For a manual check, expand the panel, switch English/Español, and refresh;
+then simulate an unavailable weather endpoint and confirm ordering still works.
+
 ## Kiosk translation
 
 The kiosk and mobile ordering pages include an English/Español selector. They

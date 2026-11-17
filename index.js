@@ -6,6 +6,7 @@ const dotenv = require('dotenv').config();
 const { createRewards } = require('./lib/rewards');
 const { registerXReport } = require('./lib/x-report');
 const { createTranslationRouter } = require('./lib/translation');
+const { createWeatherRouter } = require('./lib/weather');
 
 // Create express app
 const app = express();
@@ -66,6 +67,7 @@ app.set("view engine", "ejs");
 app.use(express.static('public'));
 app.use(express.json());
 app.use('/api/translate', createTranslationRouter());
+app.use('/api/weather', createWeatherRouter());
 const rewards = createRewards({ pool });
 app.use('/api/rewards', rewards.router);
 registerXReport(app, pool);

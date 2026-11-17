@@ -27,6 +27,16 @@
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
             <h2 tabindex="-1" id="menu-heading">Menu</h2>
+            <% if (hasEditor) { %>
+            <details class="weather-panel">
+                <summary>College Station weather</summary>
+                <div id="weather-data" aria-busy="true"><div id="weather-content"></div></div>
+                <p id="weather-status" role="status" aria-live="polite">Loading weather…</p>
+                <button id="weather-refresh" type="button">Refresh weather</button>
+                <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo</a>
+            </details>
+            <script src="/weather.js" defer></script>
+            <% } %>
             <div id="menu">
                 <% if (hasEditor) { %>
                     <% kioskMenuCategories.forEach((category, index) => { %>
