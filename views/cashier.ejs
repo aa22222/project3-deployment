@@ -6,11 +6,11 @@
     <title>Boba Shop POS — <%= pageTitle %></title>
     <link rel="stylesheet" href="/style.css">
 </head>
-<% const isMobile = pageTitle === 'Mobile Ordering'; const isKiosk = pageTitle === 'Customer Kiosk'; const hasEditor = isKiosk || isMobile; %>
+<% const isMobile = pageTitle === 'Mobile Ordering'; const isKiosk = pageTitle === 'Customer Kiosk'; const isCustomer = isKiosk || isMobile; const hasEditor = isCustomer || pageTitle === 'Cashier'; %>
 <body class="order-page <%= isMobile ? 'kiosk-page mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
     <a class="skip-link" href="#menu-heading">Skip to menu</a>
     <a class="skip-link" href="#order-heading">Skip to order</a>
-    <% if (hasEditor) { %>
+    <% if (isCustomer) { %>
     <div id="language-tools" class="language-tools" translate="no">
         <label for="page-language">Language / Idioma</label>
         <select id="page-language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option></select>
@@ -18,7 +18,7 @@
     </div>
     <script src="/translate.js" defer></script>
     <% } %>
-    <% if (hasEditor && kioskMenuCategories.length) { %>
+    <% if (isCustomer && kioskMenuCategories.length) { %>
     <nav class="kiosk-category-nav" aria-label="Menu categories">
         <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
     </nav>
@@ -27,7 +27,7 @@
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
             <h2 tabindex="-1" id="menu-heading">Menu</h2>
-            <% if (hasEditor) { %>
+            <% if (isCustomer) { %>
             <details class="weather-panel">
                 <summary>College Station weather</summary>
                 <div id="weather-data" aria-busy="true"><div id="weather-content"></div></div>
@@ -39,7 +39,7 @@
             <%- include('partials/assistant') %>
             <% } %>
             <div id="menu">
-                <% if (hasEditor) { %>
+                <% if (isCustomer) { %>
                     <% kioskMenuCategories.forEach((category, index) => { %>
                     <section class="kiosk-menu-category" id="kiosk-category-<%= index %>" aria-labelledby="category-<%= index %>">
                         <div class="kiosk-menu-category-heading">
@@ -64,7 +64,7 @@
                 <% } else { %>
                     <% menuItems.forEach(item => { %>
                         <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
-                        <% if (hasEditor) { %>
+                        <% if (isCustomer) { %>
                             <% if (item.imageUrl) { %>
                             <img class="menu-image" src="<%= item.imageUrl %>" alt="" loading="lazy" decoding="async">
                             <% } else { %>
@@ -83,14 +83,6 @@
             <h2 tabindex="-1" id="order-heading" class="cart-title">Order <% if (hasEditor) { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
             <div id="cart" role="list" aria-label="Current order"></div>
             <p id="cart-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
-            <% if (pageTitle === 'Cashier') { %>
-            <div class="customizations" aria-label="Order customizations" hidden>
-                <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
-                <button type="button" data-customization="Less ice">Less ice</button>
-                <button type="button" data-customization="More ice">More ice</button>
-                <button type="button" data-customization="Less sweet">Less sweet</button>
-            </div>
-            <% } %>
             <div class="checkout">
                 <%- include('partials/rewards') %>
                 <% if (isMobile) { %><p class="mobile-payment-note">Payment is collected at pickup. Choose how you plan to pay.</p><% } %>
@@ -298,11 +290,6 @@
             const mobileCount = document.getElementById('mobile-cart-count');
             if (mobileCount) mobileCount.textContent = itemCount;
             document.getElementById('submit').disabled = cart.length === 0;
-            const customizationPanel = document.querySelector('.customizations');
-            if (customizationPanel) customizationPanel.hidden = !cart.some(line => line.customizationOptions.length > 0);
-            document.querySelectorAll('[data-customization]').forEach(button => {
-                button.hidden = !cart.some(line => line.customizationOptions.includes(button.dataset.customization));
-            });
             if (announcement) {
                 const summary = cart.length
                     ? `Your order has ${itemCount} item${itemCount === 1 ? '' : 's'} for a total of ${money(total)}.`
@@ -342,38 +329,6 @@
             (document.querySelector(`[data-action="${action}"][data-index="${nextIndex}"]`) || document.querySelector('.drink'))?.focus();
         });
 
-        document.querySelectorAll('[data-customization]').forEach(button => button.addEventListener('click', () => {
-            const customization = button.dataset.customization;
-            if (cart.length === 0) return showNotice('Add an item to the order first.');
-            const eligible = cart.map((line, index) => ({line, index})).filter(({line}) => line.customizationOptions.includes(customization));
-            if (eligible.length === 0) return showNotice(`No items in this order can have ${customization.toLowerCase()}.`);
-            const choices = eligible.map(({line}, index) => `${index + 1}. ${line.name}${line.customizations.length ? ' — ' + line.customizations.join(', ') : ''} (${line.quantity})`);
-            const choice = window.prompt(`Which item should get ${customization.toLowerCase()}? Enter 1–${eligible.length}.\n\n${choices.join('\n')}`);
-            if (choice === null) return;
-            const index = Number(choice) - 1;
-            if (!Number.isInteger(index) || index < 0 || index >= eligible.length) return showNotice('Choose a valid item number.');
-            const cartIndex = eligible[index].index;
-            const line = cart[cartIndex];
-            if (line.customizations.includes(customization)) return showNotice(`${line.name} already has ${customization.toLowerCase()}.`);
-            let quantity = 1;
-            if (line.quantity > 1) {
-                const input = window.prompt(`How many ${line.name} drinks should get ${customization.toLowerCase()}? Enter 1–${line.quantity}.`, '1');
-                if (input === null) return;
-                quantity = Number(input);
-                if (!Number.isInteger(quantity) || quantity < 1 || quantity > line.quantity) return showNotice(`Enter a whole number from 1 to ${line.quantity}.`);
-            }
-            const updatedCustomizations = line.customizations.filter(value =>
-                !((customization === 'Less ice' && value === 'More ice') || (customization === 'More ice' && value === 'Less ice'))
-            );
-            updatedCustomizations.push(customization);
-            line.quantity -= quantity;
-            if (line.quantity === 0) cart.splice(cartIndex, 1);
-            const existing = cart.find(candidate => candidate.menuItemId === line.menuItemId && sameCustomizations(candidate.customizations, updatedCustomizations));
-            if (existing) existing.quantity += quantity;
-            else cart.push({...line, quantity, customizations: updatedCustomizations});
-            showNotice('');
-            renderCart(`Applied ${customization.toLowerCase()} to ${line.name}.`);
-        }));
 
         function showNotice(message) { notice.textContent = message; }
         window.addEventListener('rewards-change', () => {

@@ -83,6 +83,14 @@ PSQL_PASSWORD=your_database_password
 PSQL_PORT=5432
 ```
 
+## Cashier item popup (issue #31)
+
+Selecting an item on `/cashier` opens the shared customization popup before
+adding it. Use **Edit** on a cart line to change its quantity/options. Cancel or
+Escape discards edits; food items show quantity without drink-only options.
+The old numbered customization prompts have been removed. This uses the same
+ordering backend and popup as kiosk/mobile, with no new dependencies or schema.
+
 ## Customer menu assistant (issue #35)
 
 The kiosk and mobile ordering pages have a collapsible **Menu assistant** for

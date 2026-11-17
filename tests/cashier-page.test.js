@@ -4,7 +4,8 @@ const { app, pool } = require('../index');
 
 test('cashier exposes keyboard and screen-reader status landmarks', async t => {
     t.mock.method(pool, 'query', async () => ({
-        rows: [{ menu_item_id: 1, item_name: 'Jasmine Tea', current_price: '4.50' }]
+        rows: [{ menu_item_id: 1, item_name: 'Jasmine Tea', current_price: '4.50' },
+            { menu_item_id: 2, item_name: 'Mochi', current_price: '3.00' }]
     }));
     const server = app.listen(0, '127.0.0.1');
     await new Promise(resolve => server.once('listening', resolve));
@@ -24,4 +25,9 @@ test('cashier exposes keyboard and screen-reader status landmarks', async t => {
     assert.match(html, /<label class="payment-label" for="payment-method">Payment method<\/label>/);
     assert.match(html, /id="notice" role="status" aria-live="polite" aria-atomic="true"/);
     assert.match(html, /<h2 tabindex="-1" id="receipt-title">Boba Shop<\/h2>/);
+    assert.match(html, /<dialog id="drink-editor"/);
+    assert.match(html, /data-name="Jasmine Tea"[^>]+data-customizations="Boba\|Less ice\|More ice\|Less sweet"/);
+    assert.match(html, /data-name="Mochi"[^>]+data-customizations=""/);
+    assert.doesNotMatch(html, /window\.prompt\(/);
+    assert.doesNotMatch(html, /id="page-language"|id="weather-data"|id="assistant-form"/);
 });
