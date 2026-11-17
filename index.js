@@ -294,6 +294,7 @@ app.post('/orders', async (req, res) => {
             }
         }
 
+        
         await rewards.completeOrder(reward, orderId, client);
         await client.query('COMMIT');
         client.release();
