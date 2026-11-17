@@ -263,7 +263,7 @@ app.post('/orders', async (req, res) => {
         let orderId = Number(idResult.rows[0].order_id);
         let orderItemId = Number(idResult.rows[0].order_item_id);
         await client.query(
-            'INSERT INTO customer_order(order_id, order_time, total_price, payment_method) VALUES ($1, CURRENT_TIMESTAMP, $2, $3)',
+            'INSERT INTO customer_order(order_id, order_time, total_price, payment_method) VALUES ($1, CURRENT_TIMESTAMP AT TIME ZONE \'UTC\', $2, $3)',
             [orderId, (reward.totalCents / 100).toFixed(2), paymentMethod]
         );
 
@@ -316,10 +316,10 @@ app.get('/api/kitchen/orders', async (req, res) => {
     try {
         const result = await pool.query(
             'WITH kitchen_queue AS (' +
-            'SELECT co.order_id, co.order_time, co.total_price, COALESCE(kos.status, \'New\') AS status ' +
+            'SELECT co.order_id, co.order_time AT TIME ZONE \'UTC\' AS order_time, co.total_price, COALESCE(kos.status, \'New\') AS status ' +
             'FROM customer_order co ' +
             'LEFT JOIN kitchen_order_status kos ON kos.order_id = co.order_id ' +
-            'WHERE co.order_time >= CURRENT_TIMESTAMP - INTERVAL \'24 hours\' ' +
+            'WHERE co.order_time >= (CURRENT_TIMESTAMP AT TIME ZONE \'UTC\') - INTERVAL \'24 hours\' ' +
             'AND COALESCE(kos.status, \'New\') NOT IN (\'Cancelled\', \'Done\') ' +
             'ORDER BY co.order_time ASC, co.order_id ASC LIMIT 100' +
             ') ' +
