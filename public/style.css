@@ -832,10 +832,23 @@ aside {
   font-size: 1.05rem;
 }
 .kitchen-order-time {
-  display: block;
+  display: inline-block;
   margin-top: 5px;
+  margin-left: 2ch;
+  margin-right: 8px;
   color: var(--muted);
   font-size: 0.82rem;
+}
+.kitchen-order-age {
+  display: inline-block;
+  padding: 3px 8px;
+  color: var(--green-dark);
+  background: #f5e5df;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 .kitchen-order-items {
   display: grid;

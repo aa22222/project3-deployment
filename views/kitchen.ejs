@@ -32,6 +32,16 @@
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const money = value => '$' + Number(value || 0).toFixed(2);
         const timeLabel = value => new Intl.DateTimeFormat('en-US', {timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit'}).format(new Date(value));
+        const ageLabel = value => {
+            const minutes = Math.max(0, Math.floor((Date.now() - value) / 60000));
+            return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+        };
+
+        function updateOrderAges() {
+            orderGrid.querySelectorAll('.kitchen-order-age').forEach(label => {
+                label.textContent = ageLabel(Number(label.dataset.orderedAt));
+            });
+        }
 
         function renderOrders() {
             const visibleOrders = orders
@@ -51,8 +61,9 @@
                     const stage = stages.indexOf(order.status);
                     const actions = [stage > 0 ? stages[stage - 1] : null, stages[stage + 1] || 'Done']
                         .filter(Boolean).map(status => `<button class="kitchen-action" data-status="${status}" data-id="${order.orderId}" type="button" aria-label="Move order ${order.orderId} to ${status}">${status === 'Done' ? 'Mark done' : status}</button>`).join('');
+                    const orderedAt = new Date(order.orderTime).getTime();
                     return `<article class="panel kitchen-order-card" draggable="true" data-id="${order.orderId}">
-                        <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span></div></div>
+                        <div class="kitchen-order-heading"><div><strong class="kitchen-order-number">Order #${order.orderId}</strong><span class="kitchen-order-time">${timeLabel(order.orderTime)}</span><span class="kitchen-order-age" data-ordered-at="${orderedAt}">${ageLabel(orderedAt)}</span></div></div>
                         <ul class="kitchen-order-items">${items}</ul>
                         <div class="kitchen-order-total"><span>${order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} drinks</span><strong>${money(order.total)}</strong></div>
                         <div class="kitchen-order-actions">${actions}</div>
@@ -134,6 +145,7 @@
 
         loadOrders();
         window.setInterval(loadOrders, 2000);
+        window.setInterval(updateOrderAges, 15000);
     </script>
 </body>
 </html>
