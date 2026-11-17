@@ -22,7 +22,7 @@
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
     <main>
         <section class="panel menu-panel" aria-labelledby="menu-heading">
-            <h2 id="menu-heading">Menu</h2>
+            <h2 tabindex="-1" id="menu-heading">Menu</h2>
             <% if (hasEditor) { %>
             <label class="menu-search" for="menu-search">Find a menu item
                 <input id="menu-search" type="search" placeholder="Search by name…" autocomplete="off" aria-controls="menu">
@@ -62,8 +62,8 @@
         </section>
         <aside class="panel" aria-labelledby="order-heading">
             <h2 tabindex="-1" id="order-heading" class="cart-title">Order <% if (hasEditor) { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
-            <div id="cart" role="list" aria-label="Current order" aria-live="polite" aria-atomic="true"></div>
-            <p id="cart-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+            <div id="cart" role="list" aria-label="Current order"></div>
+            <p id="cart-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
             <% if (pageTitle === 'Cashier') { %>
             <div class="customizations" aria-label="Order customizations" hidden>
                 <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
@@ -84,13 +84,13 @@
                 </select>
                 <div class="total"><span>TOTAL</span><span id="total">$0.00</span></div>
                 <button id="submit" type="button"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Place order' : 'Submit order' %></button>
-                <p id="notice" role="status"></p>
+                <p id="notice" role="status" aria-live="polite" aria-atomic="true"></p>
             </div>
         </aside>
     </main>
     <dialog id="receipt" aria-labelledby="receipt-title">
         <article class="receipt-paper">
-            <h2 id="receipt-title">Boba Shop</h2>
+            <h2 tabindex="-1" id="receipt-title">Boba Shop</h2>
             <p class="receipt-subtitle">Customer receipt</p>
             <div class="receipt-details">
                 <div><span>Order</span><strong id="receipt-order-number"></strong></div>
@@ -144,10 +144,17 @@
         const cart = [];
         let placingOrder = false;
         let checkoutAttempt;
+        const paymentMethod = document.getElementById('payment-method');
+        const notice = document.getElementById('notice');
         const money = value => '$' + value.toFixed(2);
         const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
         const sameCustomizations = (a, b) => a.length === b.length && a.every(value => b.includes(value));
+        paymentMethod.addEventListener('change', () => {
+            paymentMethod.removeAttribute('aria-invalid');
+            paymentMethod.removeAttribute('aria-describedby');
+            if (notice.textContent === 'Choose a payment method to continue.') showNotice('');
+        });
         const announceCartStatus = message => {
             const announcer = document.getElementById('cart-status');
             if (!announcer) return;
@@ -228,11 +235,12 @@
                     document.getElementById('editor-error').textContent = 'Matching drinks cannot exceed 1000 per order line.';
                     return;
                 }
+                const announcement = editingIndex === null ? `Added ${line.name}.` : `Updated ${line.name}.`;
                 if (editingIndex !== null) cart.splice(editingIndex, 1);
                 if (match) match.quantity += line.quantity;
                 else cart.push(line);
                 if (editingIndex !== null) editingIndex = cart.indexOf(match || line);
-                renderCart();
+                renderCart(announcement);
                 showNotice('');
                 editor.close();
             });
@@ -245,15 +253,15 @@
             const line = cart.find(item => item.menuItemId === id && item.customizations.length === 0);
             if (line) line.quantity++;
             else cart.push({menuItemId: id, name: button.dataset.name, price: Number(button.dataset.price), quantity: 1, customizations: [], customizationOptions});
-            renderCart();
+            renderCart(`Added ${button.dataset.name}.`);
         }));
 
-        function renderCart() {
+        function renderCart(announcement) {
             const cartElement = document.getElementById('cart');
             const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
             const total = cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0);
             if (cart.length === 0) {
-                cartElement.innerHTML = '<p class="empty" aria-live="polite">Your order is empty.<br>Choose a menu item to get started.</p>';
+                cartElement.innerHTML = '<p class="empty">Your order is empty.<br>Choose a menu item to get started.</p>';
             } else {
                 cartElement.innerHTML = cart.map((line, index) => `
                     <div class="cart-line" role="listitem" aria-label="${escapeHtml(line.name)}, quantity ${line.quantity}, total ${money(linePrice(line) * line.quantity)}${line.customizations.length ? ', customizations: ' + escapeHtml(line.customizations.join(', ')) : ', no customizations'}">
@@ -284,7 +292,12 @@
             document.querySelectorAll('[data-customization]').forEach(button => {
                 button.hidden = !cart.some(line => line.customizationOptions.includes(button.dataset.customization));
             });
-            announceCartStatus(cart.length ? `Your order has ${itemCount} item${itemCount === 1 ? '' : 's'} for a total of ${money(total)}.` : 'Your order is empty.');
+            if (announcement) {
+                const summary = cart.length
+                    ? `Your order has ${itemCount} item${itemCount === 1 ? '' : 's'} for a total of ${money(total)}.`
+                    : 'Your order is empty.';
+                announceCartStatus(`${announcement} ${summary}`);
+            }
         }
 
         document.getElementById('cart').addEventListener('click', event => {
@@ -292,17 +305,28 @@
             if (!button) return;
             const index = Number(button.dataset.index);
             if (button.dataset.action === 'edit') return openEditor(cart[index], index, button);
-            if (button.dataset.action === 'remove') cart.splice(index, 1);
+            const line = cart[index];
+            let announcement;
+            if (button.dataset.action === 'remove') {
+                cart.splice(index, 1);
+                announcement = `Removed ${line.name}.`;
+            }
             if (button.dataset.action === 'increase') {
-                if (cart[index].quantity >= 1000) return showNotice('An item quantity cannot exceed 1000 per order line.');
+                if (line.quantity >= 1000) return showNotice('An item quantity cannot exceed 1000 per order line.');
                 cart[index].quantity++;
+                announcement = `Added one ${line.name}.`;
             }
             if (button.dataset.action === 'decrease') {
-                cart[index].quantity--;
-                if (cart[index].quantity === 0) cart.splice(index, 1);
+                line.quantity--;
+                if (line.quantity === 0) {
+                    cart.splice(index, 1);
+                    announcement = `Removed ${line.name}.`;
+                } else {
+                    announcement = `Removed one ${line.name}.`;
+                }
             }
             const action = button.dataset.action;
-            renderCart();
+            renderCart(announcement);
             const nextIndex = Math.min(index, cart.length - 1);
             (document.querySelector(`[data-action="${action}"][data-index="${nextIndex}"]`) || document.querySelector('.drink'))?.focus();
         });
@@ -337,10 +361,10 @@
             if (existing) existing.quantity += quantity;
             else cart.push({...line, quantity, customizations: updatedCustomizations});
             showNotice('');
-            renderCart();
+            renderCart(`Applied ${customization.toLowerCase()} to ${line.name}.`);
         }));
 
-        function showNotice(message) { document.getElementById('notice').textContent = message; }
+        function showNotice(message) { notice.textContent = message; }
         window.addEventListener('rewards-change', () => {
             const subtotal = Math.round(cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0) * 100);
             const discount = window.rewardsWidget.discountCents;
@@ -350,15 +374,22 @@
         document.getElementById('submit').addEventListener('click', async () => {
             if (placingOrder) return;
             if (cart.length === 0) return showNotice('Tap an item to add it to the order.');
-            const paymentMethod = document.getElementById('payment-method').value;
-            if (!paymentMethod) return showNotice('Choose a payment method to continue.');
+            if (!paymentMethod.value) {
+                paymentMethod.setAttribute('aria-invalid', 'true');
+                paymentMethod.setAttribute('aria-describedby', 'notice');
+                showNotice('Choose a payment method to continue.');
+                paymentMethod.focus();
+                return;
+            }
+            paymentMethod.removeAttribute('aria-invalid');
+            paymentMethod.removeAttribute('aria-describedby');
             const submitButton = document.getElementById('submit');
             placingOrder = true;
             document.querySelector('main').inert = true;
             submitButton.disabled = true;
             showNotice('Submitting order…');
             try {
-                const body = JSON.stringify({paymentMethod, ...window.rewardsWidget.checkout, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))});
+                const body = JSON.stringify({paymentMethod: paymentMethod.value, ...window.rewardsWidget.checkout, items: cart.map(({menuItemId, quantity, customizations}) => ({menuItemId, quantity, customizations}))});
                 if (!checkoutAttempt) checkoutAttempt = { body, key: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}` };
                 const response = await fetch('/orders', {
                     method: 'POST', headers: {'Content-Type': 'application/json', 'Idempotency-Key': checkoutAttempt.key}, body: checkoutAttempt.body
@@ -383,12 +414,16 @@
                             <div><strong>${escapeHtml(line.name)}</strong><small>${line.quantity} × ${money(linePrice(line))}${line.customizations.length ? ` · ${escapeHtml(line.customizations.join(', '))}` : ''}</small></div>
                             <span>${money(linePrice(line) * line.quantity)}</span>
                         </div>`).join('');
-                    document.getElementById('receipt').showModal();
+                    const receipt = document.getElementById('receipt');
+                    receipt.showModal();
+                    document.getElementById('receipt-title').focus();
                 }
                 checkoutAttempt = null;
                 cart.length = 0;
                 window.rewardsWidget.reset();
-                document.getElementById('payment-method').value = '';
+                paymentMethod.value = '';
+                paymentMethod.removeAttribute('aria-invalid');
+                paymentMethod.removeAttribute('aria-describedby');
                 renderCart();
                 const rewardsNotice = result.rewards ? ` Earned ${result.rewards.pointsEarned} points. Balance: ${result.rewards.points}.${result.rewards.notification === 'queued' ? ' Reward text queued.' : result.rewards.notification === 'failed' ? ' Points saved; reward text could not be sent.' : ''}` : '';
                 showNotice(`Order #${result.orderId} submitted. Total: $${result.total}. Payment: ${result.paymentMethod}.${rewardsNotice}`);
