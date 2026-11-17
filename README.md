@@ -75,6 +75,7 @@ file retain the placeholder.
 Create a file named `.env` in the project root. Replace the placeholder values
 with the credentials and connection details for your PostgreSQL database:
 
+
 ```dotenv
 PSQL_USER=your_database_username
 PSQL_HOST=your_database_host
