@@ -53,7 +53,9 @@ cashier, kiosk, and mobile menus when those pages are next loaded.
 
 Open **X-report** in the manager portal (`/manager/x-report`) for a read-only
 sales snapshot. It defaults to today; choose a date and refresh to view another
-day. Dates and hours use the PostgreSQL session timezone shown on the report.
+day. Dates and hours use the shop's America/Chicago timezone, including daylight
+saving changes, regardless of the server or database session timezone. Order
+timestamps are stored in UTC and converted for the report.
 The report includes sales after rewards discounts, order count, average order
 value, items sold, discounts, hourly sales, payment totals, and the top ten items
 by quantity. Item sales use the unit prices saved with orders, before discounts.
