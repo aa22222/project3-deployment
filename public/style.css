@@ -1577,7 +1577,7 @@ aside {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: contain;
-  background: #bd2633;
+  background: #fff;
   border-radius: 3px;
 }
 .menu-image-placeholder {
@@ -1897,9 +1897,7 @@ aside {
   overflow: hidden;
   border: 0;
   border-radius: 10px;
-  background:
-    radial-gradient(ellipse at 50% 42%, #fffaf0 0 22%, transparent 23%),
-    linear-gradient(135deg, #ead7c5, #f7e9d4 55%, #e7c9bb);
+  background: #fff;
 }
 .kiosk-page .kiosk-drink-art svg {
   width: auto;
