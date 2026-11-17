@@ -8,6 +8,8 @@
 </head>
 <% const isMobile = pageTitle === 'Mobile Ordering'; const isKiosk = pageTitle === 'Customer Kiosk'; const hasEditor = isKiosk || isMobile; %>
 <body class="order-page <%= isMobile ? 'mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
+    <a class="skip-link" href="#menu-heading">Skip to menu</a>
+    <a class="skip-link" href="#order-heading">Skip to order</a>
     <header>
         <div><h1><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Boba Shop' : 'Boba Shop POS' %></h1><p class="subtitle"><%= pageTitle === 'Customer Kiosk' || isMobile ? 'Choose menu items and customize your order' : 'Select menu items to add them, then customize the order' %></p></div>
     </header>
@@ -37,7 +39,7 @@
                         </div>
                         <div class="kiosk-menu-category-items">
                         <% category.items.forEach(item => { %>
-                        <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>">
+                        <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
                         <span class="menu-image-placeholder kiosk-drink-art" aria-hidden="true"><svg viewBox="0 0 120 130" fill="none"><path d="m71 18 19-13" stroke="#61202d" stroke-width="5" stroke-linecap="round"/><path d="M31 27h63l-8 87H40l-9-87Z" fill="#fff9ec" stroke="#61202d" stroke-width="4"/><path d="M36 54h53l-5 53H42l-6-53Z" fill="#d79261"/><path d="M37 52h53" stroke="#61202d" stroke-width="4"/><circle cx="51" cy="96" r="5" fill="#61202d"/><circle cx="66" cy="101" r="5" fill="#61202d"/><circle cx="77" cy="91" r="5" fill="#61202d"/><path d="m48 37 3 10m29-10-3 10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></span>
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
@@ -48,7 +50,7 @@
                     <% }); %>
                 <% } else { %>
                     <% menuItems.forEach(item => { %>
-                        <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>">
+                        <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
                         <% if (hasEditor) { %><span class="menu-image-placeholder" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M22 17h26l-4 39H26l-4-39Zm-4 0h34M39 17l4-12"/><circle cx="32" cy="45" r="2"/><circle cx="40" cy="46" r="2"/><circle cx="35" cy="51" r="2"/></svg><span>Image coming soon</span></span><% } %>
                         <span class="drink-name"><%= item.item_name %></span>
                         <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
@@ -60,7 +62,8 @@
         </section>
         <aside class="panel" aria-labelledby="order-heading">
             <h2 tabindex="-1" id="order-heading" class="cart-title">Order <% if (hasEditor) { %><span id="order-count">0 items</span><% } else { %><span class="cart-hint">— tap × to remove</span><% } %></h2>
-            <div id="cart" aria-live="polite"></div>
+            <div id="cart" role="list" aria-label="Current order" aria-live="polite" aria-atomic="true"></div>
+            <p id="cart-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
             <% if (pageTitle === 'Cashier') { %>
             <div class="customizations" aria-label="Order customizations" hidden>
                 <button type="button" data-customization="Boba">Add boba (+$0.99)</button>
@@ -145,6 +148,14 @@
         const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const linePrice = line => line.price + (line.customizations.includes('Boba') ? 0.99 : 0);
         const sameCustomizations = (a, b) => a.length === b.length && a.every(value => b.includes(value));
+        const announceCartStatus = message => {
+            const announcer = document.getElementById('cart-status');
+            if (!announcer) return;
+            announcer.textContent = '';
+            window.requestAnimationFrame(() => {
+                announcer.textContent = message;
+            });
+        };
         document.getElementById('menu-search')?.addEventListener('input', event => {
             const search = event.target.value.trim().toLowerCase();
             const buttons = [...document.querySelectorAll('.drink')];
@@ -239,37 +250,41 @@
 
         function renderCart() {
             const cartElement = document.getElementById('cart');
-            if (cart.length === 0) cartElement.innerHTML = '<p class="empty">Your order is empty.<br>Choose a menu item to get started.</p>';
-            else cartElement.innerHTML = cart.map((line, index) => `
-                <div class="cart-line">
-                    <div>
-                        <div class="line-name">${escapeHtml(line.name)}</div>
-                        <div class="line-meta">${line.quantity} × ${money(linePrice(line))} &nbsp; ${money(linePrice(line) * line.quantity)}</div>
-                        ${line.customizations.length ? `<div class="line-custom">${escapeHtml(line.customizations.join(', '))}</div>` : ''}
-                        <div class="line-actions">
-                            <button class="qty-btn" type="button" data-action="decrease" data-index="${index}" aria-label="Remove one ${escapeHtml(line.name)}">−</button>
-                            <span>${line.quantity}</span>
-                            <button class="qty-btn" type="button" data-action="increase" data-index="${index}" aria-label="Add one ${escapeHtml(line.name)}">+</button>
-                            ${editor ? `<button class="edit-drink" type="button" data-action="edit" data-index="${index}" aria-label="Edit ${escapeHtml(line.name)}">Edit</button>` : ''}
-                        </div>
-                    </div>
-                    <button class="remove" type="button" data-action="remove" data-index="${index}" aria-label="Remove ${escapeHtml(line.name)}">×</button>
-                </div>`).join('');
+            const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
             const total = cart.reduce((sum, line) => sum + linePrice(line) * line.quantity, 0);
+            if (cart.length === 0) {
+                cartElement.innerHTML = '<p class="empty" aria-live="polite">Your order is empty.<br>Choose a menu item to get started.</p>';
+            } else {
+                cartElement.innerHTML = cart.map((line, index) => `
+                    <div class="cart-line" role="listitem" aria-label="${escapeHtml(line.name)}, quantity ${line.quantity}, total ${money(linePrice(line) * line.quantity)}${line.customizations.length ? ', customizations: ' + escapeHtml(line.customizations.join(', ')) : ', no customizations'}">
+                        <div>
+                            <div class="line-name">${escapeHtml(line.name)}</div>
+                            <div class="line-meta">${line.quantity} × ${money(linePrice(line))} &nbsp; ${money(linePrice(line) * line.quantity)}</div>
+                            ${line.customizations.length ? `<div class="line-custom">${escapeHtml(line.customizations.join(', '))}</div>` : ''}
+                            <div class="line-actions">
+                                <button class="qty-btn" type="button" data-action="decrease" data-index="${index}" aria-label="Remove one ${escapeHtml(line.name)}">−</button>
+                                <span aria-label="Quantity ${line.quantity}">${line.quantity}</span>
+                                <button class="qty-btn" type="button" data-action="increase" data-index="${index}" aria-label="Add one ${escapeHtml(line.name)}">+</button>
+                                ${editor ? `<button class="edit-drink" type="button" data-action="edit" data-index="${index}" aria-label="Edit ${escapeHtml(line.name)}">Edit</button>` : ''}
+                            </div>
+                        </div>
+                        <button class="remove" type="button" data-action="remove" data-index="${index}" aria-label="Remove ${escapeHtml(line.name)}">×</button>
+                    </div>`).join('');
+            }
             window.rewardsWidget.updateSubtotal(Math.round(total * 100));
             const orderCount = document.getElementById('order-count');
             if (orderCount) {
-                const count = cart.reduce((sum, line) => sum + line.quantity, 0);
-                orderCount.textContent = `${count} item${count === 1 ? '' : 's'}`;
+                orderCount.textContent = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
             }
             const mobileCount = document.getElementById('mobile-cart-count');
-            if (mobileCount) mobileCount.textContent = cart.reduce((sum, line) => sum + line.quantity, 0);
+            if (mobileCount) mobileCount.textContent = itemCount;
             document.getElementById('submit').disabled = cart.length === 0;
             const customizationPanel = document.querySelector('.customizations');
             if (customizationPanel) customizationPanel.hidden = !cart.some(line => line.customizationOptions.length > 0);
             document.querySelectorAll('[data-customization]').forEach(button => {
                 button.hidden = !cart.some(line => line.customizationOptions.includes(button.dataset.customization));
             });
+            announceCartStatus(cart.length ? `Your order has ${itemCount} item${itemCount === 1 ? '' : 's'} for a total of ${money(total)}.` : 'Your order is empty.');
         }
 
         document.getElementById('cart').addEventListener('click', event => {
