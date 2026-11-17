@@ -36,6 +36,7 @@
                 <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo</a>
             </details>
             <script src="/weather.js" defer></script>
+            <%- include('partials/assistant') %>
             <% } %>
             <div id="menu">
                 <% if (hasEditor) { %>
@@ -430,6 +431,7 @@
                 }
                 checkoutAttempt = null;
                 cart.length = 0;
+                window.dispatchEvent(new Event('order-completed'));
                 window.rewardsWidget.reset();
                 paymentMethod.value = '';
                 paymentMethod.removeAttribute('aria-invalid');

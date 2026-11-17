@@ -21,6 +21,19 @@
   background: var(--page);
 }
 
+.assistant-panel { margin-bottom: 20px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-size: .9rem; }
+.assistant-panel summary { min-height: 32px; font-weight: 700; cursor: pointer; }
+.assistant-panel p { line-height: 1.5; }
+.assistant-hint { color: var(--muted); }
+.assistant-log { max-height: 300px; overflow-y: auto; overflow-wrap: anywhere; }
+.assistant-turn { margin: 10px 0; padding: 10px; border-left: 3px solid var(--border); }
+.assistant-assistant { border-color: var(--green); }
+.assistant-turn p { margin: 0 0 6px; white-space: pre-wrap; }
+#assistant-form { display: grid; gap: 8px; }
+#assistant-message { width: 100%; padding: 10px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--muted); border-radius: 4px; resize: vertical; }
+.assistant-panel button { min-height: 44px; padding: 8px 12px; margin: 4px 8px 4px 0; font: inherit; color: var(--green-dark); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+.assistant-panel button:disabled { opacity: .6; cursor: wait; }
+
 .weather-panel { margin-bottom: 20px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-size: .9rem; }
 .weather-panel summary { min-height: 32px; font-weight: 700; cursor: pointer; }
 .weather-panel p { margin: 10px 0; }

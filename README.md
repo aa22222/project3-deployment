@@ -83,6 +83,60 @@ PSQL_PASSWORD=your_database_password
 PSQL_PORT=5432
 ```
 
+## Customer menu assistant (issue #35)
+
+The kiosk and mobile ordering pages have a collapsible **Menu assistant** for
+menu suggestions and ordering guidance. The backend reads current menu prices
+and supported customizations for every question. Recommended IDs are validated,
+and their names/prices are displayed directly from PostgreSQL. **View in menu**
+focuses the existing item without adding it or placing an order.
+
+The assistant uses Groq's hosted `openai/gpt-oss-20b` model. It does not call
+OpenAI's API, require an OpenAI account, or use a paid fallback. Create a Groq
+account kept on its **Free plan**, create an API key in the console, and set:
+
+```dotenv
+GROQ_API_KEY=your_free_plan_key
+```
+
+Put this only in the git-ignored `.env` locally and Render's Environment settings
+when deploying. Restart/redeploy afterward. Do not add a payment method or
+upgrade the account to the Developer plan. Groq's Free plan rejects excess use
+with a rate-limit error instead of charging; this depends on keeping the account
+on Free, and the app cannot inspect the account's billing plan. See
+[Groq's Free-plan explanation](https://community.groq.com/t/do-i-get-charged-for-anything-on-the-groq-free-plan/832),
+[billing documentation](https://console.groq.com/docs/billing-faqs), and
+[current rate limits](https://console.groq.com/docs/rate-limits).
+
+No new dependencies or database changes are needed. Without a key or when the
+provider fails/reaches its limit, the panel displays an unavailable/retry
+message; normal ordering still works. Replies are limited to short plain text,
+with a ten-request/minute local limit, a fifteen-second provider timeout, and
+three recent conversation turns retained in browser memory. No customer chat
+history is stored in PostgreSQL or browser storage.
+
+Chat text is sent to Groq along with the public menu. Rewards details, codes,
+session tokens, receipts, and order history are not automatically included.
+Customers are asked not to enter personal/payment details. Ingredient, dietary,
+allergen, nutrition, and caffeine questions get a factual “ask staff” response
+because the database does not verify those facts; this local guard is not
+presented as proof that the AI API is configured. AI suggestions should still
+be checked against the displayed menu.
+
+New replies use the selected English/Spanish language. Existing chat messages
+retain their original language with a matching `lang` attribute and are excluded
+from MyMemory translation to avoid sending private conversation text to another
+provider or translating replies twice. Clearing the conversation, completing
+checkout, or selecting **New order** clears history and cancels pending replies.
+The assistant cannot submit orders, redeem points, execute SQL, or call tools.
+
+`npm test` checks request validation, read-only menu context, recommendation
+validation, privacy, provider failures, rate limiting, and customer-page scope
+with a stubbed provider. For live acceptance after configuring a Free-plan key,
+ask about available drinks, budget choices, boba, cart editing, and checkout;
+then test Spanish, Clear conversation, and a missing/unavailable provider.
+Live model behavior remains unverified until a real key is configured.
+
 ## Local weather forecast
 
 The kiosk (`/kiosk`) and mobile ordering (`/mobile`) pages have a compact,

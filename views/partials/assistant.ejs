@@ -1,0 +1,13 @@
+<details class="assistant-panel">
+    <summary>Menu assistant</summary>
+    <p>Ask about drinks or how to order. Check the listed options and ask staff about ingredients or dietary needs.</p>
+    <p class="assistant-hint">Your messages are sent to our AI service. Do not enter personal or payment details.</p>
+    <div id="assistant-log" class="assistant-log" role="log" aria-label="Menu assistant conversation" aria-live="polite" aria-relevant="additions" translate="no"></div>
+    <form id="assistant-form">
+        <label for="assistant-message">Your question</label>
+        <textarea id="assistant-message" maxlength="500" rows="2" placeholder="What teas do you have?" required></textarea>
+        <div class="assistant-actions"><button id="assistant-send" type="submit">Send</button><button id="assistant-clear" type="button">Clear conversation</button></div>
+    </form>
+    <p id="assistant-status" role="status" aria-live="polite" translate="no"></p>
+</details>
+<script src="/assistant.js" defer></script>

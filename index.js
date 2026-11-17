@@ -7,6 +7,7 @@ const { createRewards } = require('./lib/rewards');
 const { registerXReport } = require('./lib/x-report');
 const { createTranslationRouter } = require('./lib/translation');
 const { createWeatherRouter } = require('./lib/weather');
+const { createAssistantRouter } = require('./lib/assistant');
 
 // Create express app
 const app = express();
@@ -68,6 +69,7 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use('/api/translate', createTranslationRouter());
 app.use('/api/weather', createWeatherRouter());
+app.use('/api/assistant', createAssistantRouter(pool, getAvailableCustomizations));
 const rewards = createRewards({ pool });
 app.use('/api/rewards', rewards.router);
 registerXReport(app, pool);
