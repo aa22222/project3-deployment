@@ -83,6 +83,38 @@ PSQL_PASSWORD=your_database_password
 PSQL_PORT=5432
 ```
 
+## Kiosk translation
+
+The kiosk and mobile ordering pages include an English/Español selector. They
+use MyMemory's free, anonymous translation endpoint through the backend. No key,
+account, card, or billing setup is needed. The app never calls Google or a paid
+translation endpoint. Restart/redeploy to use this integration.
+
+MyMemory documents a 5,000-character daily allowance for anonymous requests.
+If its allowance is exhausted, the service is unavailable, or a request fails,
+the page restores English and shows a bilingual notice. Ordering still works;
+there is no automatic upgrade or paid fallback. This daily allowance can be
+restrictive during repeated testing or server restarts, which clear the cache.
+See [usage limits](https://mymemory.translated.net/doc/usagelimits.php) and
+[API documentation](https://mymemory.translated.net/doc/spec.php). Chrome's
+built-in page translator is separate from this application's API integration.
+
+The selector translates menu/category text, customization options, cart and
+checkout controls, dynamic messages, rewards labels, receipt text, and
+accessibility labels. It updates `<html lang>` and preserves the cart and
+canonical IDs/payment/customization values. Contact details, input values,
+receipt IDs/dates are excluded; numbers in other text are masked as placeholders.
+Translations are cached for 24 hours on the server and for the current page in
+the browser. A provider failure restores English without clearing the order.
+
+Run `npm test` for API validation, provider-contract, caching, and failure checks;
+these stub the provider and do not require a key. For live acceptance in Chrome,
+select Español on `/kiosk`, customize/add an item, switch to English and back,
+and confirm quantities/options/totals remain unchanged. Check dynamic errors and
+receipt labels using test orders. Finally test an unavailable provider and
+confirm English remains usable. Mark the API integration complete only after
+this walkthrough succeeds on the deployed application.
+
 ## Phone and email rewards
 
 Both `/cashier` and `/kiosk` have **Boba Rewards** at checkout. A customer can

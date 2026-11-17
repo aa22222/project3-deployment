@@ -10,6 +10,14 @@
 <body class="order-page <%= isMobile ? 'kiosk-page mobile-page' : pageTitle === 'Cashier' ? 'cashier-page' : 'kiosk-page' %>">
     <a class="skip-link" href="#menu-heading">Skip to menu</a>
     <a class="skip-link" href="#order-heading">Skip to order</a>
+    <% if (hasEditor) { %>
+    <div id="language-tools" class="language-tools" translate="no">
+        <label for="page-language">Language / Idioma</label>
+        <select id="page-language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option></select>
+        <span id="language-status" role="status" aria-live="polite"></span>
+    </div>
+    <script src="/translate.js" defer></script>
+    <% } %>
     <% if (hasEditor && kioskMenuCategories.length) { %>
     <nav class="kiosk-category-nav" aria-label="Menu categories">
         <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
@@ -93,8 +101,8 @@
             <h2 tabindex="-1" id="receipt-title">Boba Shop</h2>
             <p class="receipt-subtitle">Customer receipt</p>
             <div class="receipt-details">
-                <div><span>Order</span><strong id="receipt-order-number"></strong></div>
-                <div><span>Date</span><strong id="receipt-date"></strong></div>
+                <div><span>Order</span><strong id="receipt-order-number" translate="no"></strong></div>
+                <div><span>Date</span><strong id="receipt-date" translate="no"></strong></div>
                 <div><span>Payment</span><strong id="receipt-payment"></strong></div>
             </div>
             <div id="receipt-items" class="receipt-items"></div>

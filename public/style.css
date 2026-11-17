@@ -21,6 +21,10 @@
   background: var(--page);
 }
 
+.language-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.language-tools select { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--muted); border-radius: 4px; }
+#language-status { font-size: .9rem; color: var(--muted); }
+
 * {
   box-sizing: border-box;
 }

@@ -5,6 +5,7 @@ const path = require('path');
 const dotenv = require('dotenv').config();
 const { createRewards } = require('./lib/rewards');
 const { registerXReport } = require('./lib/x-report');
+const { createTranslationRouter } = require('./lib/translation');
 
 // Create express app
 const app = express();
@@ -64,6 +65,7 @@ process.on('SIGINT', function() {
 app.set("view engine", "ejs");
 app.use(express.static('public'));
 app.use(express.json());
+app.use('/api/translate', createTranslationRouter());
 const rewards = createRewards({ pool });
 app.use('/api/rewards', rewards.router);
 registerXReport(app, pool);
