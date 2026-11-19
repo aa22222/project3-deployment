@@ -1,5 +1,7 @@
-<details class="assistant-panel">
-    <summary>Menu assistant</summary>
+<div class="assistant-widget">
+<details class="assistant-panel" aria-label="AI Menu Assistant">
+    <summary><span class="assistant-launcher-icon" aria-hidden="true">✦</span><span>AI Menu Assistant</span></summary>
+    <button class="assistant-minimize" type="button" aria-label="Minimize AI Menu Assistant">−</button>
     <p>Ask about drinks or how to order. Check the listed options and ask staff about ingredients or dietary needs.</p>
     <p class="assistant-hint">Your messages are sent to our AI service. Do not enter personal or payment details.</p>
     <div id="assistant-log" class="assistant-log" role="log" aria-label="Menu assistant conversation" aria-live="polite" aria-relevant="additions" translate="no"></div>
@@ -10,4 +12,6 @@
     </form>
     <p id="assistant-status" role="status" aria-live="polite" translate="no"></p>
 </details>
+<button class="assistant-peek" type="button" aria-label="Show AI Menu Assistant">AI</button>
+</div>
 <script src="/assistant.js" defer></script>

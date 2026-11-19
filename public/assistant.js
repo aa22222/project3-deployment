@@ -1,4 +1,22 @@
 (() => {
+    const widget = document.querySelector('.assistant-widget');
+    const panel = document.querySelector('.assistant-panel');
+    const minimize = document.querySelector('.assistant-minimize');
+    const peek = document.querySelector('.assistant-peek');
+    try {
+        if (sessionStorage.getItem('menu-assistant-minimized') === 'true') widget.classList.add('is-minimized');
+    } catch (_) {}
+    minimize.addEventListener('click', () => {
+        panel.open = false;
+        widget.classList.add('is-minimized');
+        try { sessionStorage.setItem('menu-assistant-minimized', 'true'); } catch (_) {}
+        peek.focus();
+    });
+    peek.addEventListener('click', () => {
+        widget.classList.remove('is-minimized');
+        try { sessionStorage.removeItem('menu-assistant-minimized'); } catch (_) {}
+        panel.querySelector('summary').focus();
+    });
     const form = document.getElementById('assistant-form'), input = document.getElementById('assistant-message');
     const log = document.getElementById('assistant-log'), status = document.getElementById('assistant-status');
     const send = document.getElementById('assistant-send');
@@ -56,6 +74,6 @@
         }
     });
     document.getElementById('assistant-clear').addEventListener('click', () => { clear(); input.focus(); });
-    document.getElementById('new-order').addEventListener('click', clear);
+    document.getElementById('new-order')?.addEventListener('click', clear);
     window.addEventListener('order-completed', clear);
 })();
