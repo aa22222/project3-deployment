@@ -230,6 +230,7 @@
             });
         };
         const categoryNav = document.querySelector('.kiosk-category-nav');
+        const stickyTools = document.querySelector('.kiosk-sticky-tools');
         const contrastToggle = document.getElementById('contrast-toggle');
         if (contrastToggle) {
             const contrastEnabled = document.documentElement.dataset.highContrast === 'true';
@@ -244,8 +245,9 @@
             });
         }
         if (categoryNav) {
-            const updateNavHeight = () => document.body.style.setProperty('--category-nav-height', `${categoryNav.getBoundingClientRect().height}px`);
-            new ResizeObserver(updateNavHeight).observe(categoryNav);
+            const stickyHeightSource = stickyTools || categoryNav;
+            const updateNavHeight = () => document.body.style.setProperty('--category-nav-height', `${stickyHeightSource.getBoundingClientRect().height}px`);
+            new ResizeObserver(updateNavHeight).observe(stickyHeightSource);
             updateNavHeight();
         }
 
