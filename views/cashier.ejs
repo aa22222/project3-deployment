@@ -18,21 +18,44 @@
         <label for="page-language">Language / Idioma</label>
         <select id="page-language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option></select>
         <span id="language-status" role="status" aria-live="polite"></span>
+        <div class="text-size-tools" role="group" aria-label="Text size controls">
+            <span class="text-size-label">Text size</span>
+            <div class="text-size-control">
+                <button type="button" class="text-size-button" data-text-size="decrease" aria-label="Zoom out">−</button>
+                <button type="button" class="text-size-button text-size-reset" data-text-size="reset" aria-label="Reset text size">100%</button>
+                <button type="button" class="text-size-button" data-text-size="increase" aria-label="Zoom in">+</button>
+            </div>
+            <span id="text-size-status" class="sr-only" role="status" aria-live="polite"></span>
+        </div>
     </div><% } %>
     <script src="/translate.js" defer></script>
+    <script src="/text-size.js" defer></script>
     <% } %>
     <% if (isCustomer && kioskMenuCategories.length) { %>
-    <nav class="kiosk-category-nav" aria-label="Menu categories">
-        <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
-        <% if (isKiosk) { %>
+    <% if (isKiosk) { %><div class="kiosk-sticky-tools">
         <div id="language-tools" class="language-tools kiosk-language-tools" translate="no">
             <label for="page-language">Language / Idioma</label>
             <select id="page-language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option></select>
             <span id="language-status" role="status" aria-live="polite"></span>
+            <div class="text-size-tools" role="group" aria-label="Text size controls">
+                <span class="text-size-label">Text size</span>
+                <div class="text-size-control">
+                    <button type="button" class="text-size-button" data-text-size="decrease" aria-label="Zoom out">−</button>
+                    <button type="button" class="text-size-button text-size-reset" data-text-size="reset" aria-label="Reset text size">100%</button>
+                    <button type="button" class="text-size-button" data-text-size="increase" aria-label="Zoom in">+</button>
+                </div>
+                <span id="text-size-status" class="sr-only" role="status" aria-live="polite"></span>
+            </div>
+            <button class="contrast-toggle" id="contrast-toggle" type="button" aria-pressed="false">High contrast: Off</button>
         </div>
-        <button class="contrast-toggle" id="contrast-toggle" type="button" aria-pressed="false">High contrast: Off</button>
-        <% } %>
+        <nav class="kiosk-category-nav" aria-label="Menu categories">
+            <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
+        </nav>
+    </div><% } else { %>
+    <nav class="kiosk-category-nav" aria-label="Menu categories">
+        <% kioskMenuCategories.forEach((category, index) => { %><a href="#kiosk-category-<%= index %>" title="<%= category.name %>"><%= category.name.split(' / ')[0] %></a><% }); %>
     </nav>
+    <% } %>
     <% } %>
     <% if (isMobile) { %><nav class="mobile-order-nav" aria-label="Ordering"><a href="#menu-heading">Browse menu</a><a href="#order-heading" id="mobile-cart-link">View order &middot; <span id="mobile-cart-count">0</span></a></nav><% } %>
     <main>

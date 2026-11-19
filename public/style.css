@@ -44,9 +44,18 @@
 .weather-panel button { min-height: 44px; margin-right: 12px; padding: 8px 12px; font: inherit; color: var(--green-dark); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
 .weather-panel a { color: var(--green-dark); }
 
-.language-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.language-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; padding: 10px clamp(16px, 3vw, 32px); background: var(--surface); border-bottom: 1px solid var(--border); }
 .language-tools select { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--muted); border-radius: 4px; }
 #language-status { font-size: .9rem; color: var(--muted); }
+#language-status:empty { display: none; }
+.text-size-tools { display: flex; align-items: center; gap: 10px; margin-left: auto; white-space: nowrap; }
+.text-size-label { color: var(--muted); font-size: .9rem; font-weight: 700; }
+.text-size-control { display: inline-flex; align-items: center; overflow: hidden; border: 1px solid var(--muted); border-radius: 8px; }
+.text-size-button { display: inline-grid; min-width: 42px; min-height: 42px; place-items: center; padding: 6px 10px; font-family: inherit; font-size: 1.15rem; font-weight: 700; line-height: 1; color: var(--green-dark); background: var(--surface); border: 0; cursor: pointer; }
+.text-size-button + .text-size-button { border-left: 1px solid var(--border); }
+.text-size-button.text-size-reset { min-width: 58px; font-size: .85rem; }
+.text-size-button:disabled { opacity: .45; cursor: default; }
+.text-size-button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 
 * {
   box-sizing: border-box;
@@ -1794,18 +1803,15 @@ aside {
   font-size: 1rem;
 }
 .kiosk-category-nav {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 10px clamp(20px, 3vw, 48px);
+  gap: 8px 10px;
+  padding: 8px clamp(20px, 3vw, 48px) 12px;
   background: #fffaf2;
-  border-bottom: 1px solid #ded2c2;
-  box-shadow: 0 3px 10px rgb(46 40 38 / 8%);
+  border-top: 1px solid #eee4d8;
 }
+.kiosk-sticky-tools { position: sticky; top: 0; z-index: 5; background: #fffaf2; border-bottom: 1px solid #ded2c2; box-shadow: 0 3px 10px rgb(46 40 38 / 8%); }
 .kiosk-category-nav > span {
   padding: 0 8px 0 0;
   color: var(--muted);
@@ -1848,12 +1854,17 @@ aside {
 }
 .kiosk-language-tools {
   flex: 0 0 auto;
-  margin-left: auto;
-  padding: 0;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  margin: 0;
+  padding: 10px clamp(20px, 3vw, 48px);
   background: transparent;
   border: 0;
-  gap: 8px;
+  gap: 10px 14px;
 }
+.kiosk-language-tools .text-size-tools { justify-self: end; }
+.kiosk-language-tools .contrast-toggle { min-height: 44px; padding: 7px 12px; font-size: .9rem; }
 .kiosk-language-tools label {
   font-size: 0.9rem;
   font-weight: 700;
@@ -2100,6 +2111,9 @@ html[data-high-contrast="true"] .kiosk-page .cart-line small {
   color: #000;
 }
 @media (max-width: 850px) {
+  .kiosk-language-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; padding: 8px 18px; }
+  .kiosk-language-tools .text-size-tools { margin-left: auto; }
+  .kiosk-category-nav { padding: 8px 18px 10px; }
   .kiosk-page main {
     grid-template-columns: minmax(0, 1fr);
     padding: 22px 18px;
@@ -2174,9 +2188,13 @@ html[data-high-contrast="true"] .kiosk-page .cart-line small {
     padding: 18px 16px;
   }
   .kiosk-category-nav {
-    gap: 7px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 8px 12px 10px;
   }
+  .kiosk-language-tools { padding: 8px 12px; gap: 8px; }
+  .kiosk-language-tools .text-size-tools { flex: 1 1 auto; margin-left: 0; justify-content: flex-end; }
+  .kiosk-language-tools .text-size-label { display: none; }
+  .kiosk-language-tools .contrast-toggle { margin-left: auto; }
   .kiosk-category-nav a {
     min-height: 44px;
     padding: 0 13px;
