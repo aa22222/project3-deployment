@@ -94,6 +94,28 @@
                         </div>
                     </section>
                     <% }); %>
+                <% } else if (pageTitle === 'Cashier') { %>
+                    <% if (kioskMenuCategories.length) { kioskMenuCategories.forEach((category, index) => { %>
+                    <section class="cashier-menu-category kiosk-menu-category" aria-labelledby="cashier-category-<%= index %>">
+                        <div class="kiosk-menu-category-heading">
+                            <h3 id="cashier-category-<%= index %>"><%= category.name %></h3>
+                            <p><%= category.description %></p>
+                        </div>
+                        <div class="kiosk-menu-category-items">
+                            <% category.items.forEach(item => { %>
+                            <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
+                                <span class="drink-name"><%= item.item_name %></span>
+                                <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
+                            </button>
+                            <% }); %>
+                        </div>
+                    </section>
+                    <% }); } else { menuItems.forEach(item => { %>
+                    <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">
+                        <span class="drink-name"><%= item.item_name %></span>
+                        <span class="price">$<%= Number(item.current_price).toFixed(2) %></span>
+                    </button>
+                    <% }); } %>
                 <% } else { %>
                     <% menuItems.forEach(item => { %>
                         <button class="drink" type="button" data-id="<%= item.menu_item_id %>" data-name="<%= item.item_name %>" data-price="<%= item.current_price %>" data-customizations="<%= item.customizations.join('|') %>" aria-label="Add <%= item.item_name %> for $<%= Number(item.current_price).toFixed(2) %>">

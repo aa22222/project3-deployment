@@ -217,6 +217,7 @@ h2 {
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 10px;
 }
+.cashier-menu-category { grid-column: 1 / -1; min-width: 0; }
 
 .drink {
   min-height: 124px;
